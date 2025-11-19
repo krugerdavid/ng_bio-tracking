@@ -1,12 +1,16 @@
-import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { isAdmin } from '../../domain/value-objects/Role';
 
-interface LayoutProps {
-    children: ReactNode;
-}
-
-export default function Layout({ children }: LayoutProps) {
+export default function Layout() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -24,32 +28,65 @@ export default function Layout({ children }: LayoutProps) {
                             </h1>
                         </div>
 
-                        <div className="flex space-x-1">
-                            <Link
-                                to="/"
-                                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${location.pathname === '/'
-                                    ? 'bg-orange-500 text-white shadow-md'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                    }`}
-                            >
-                                Miembros
-                            </Link>
-                            <Link
-                                to="/register"
-                                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${location.pathname === '/register'
-                                    ? 'bg-orange-500 text-white shadow-md'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                    }`}
-                            >
-                                Registrar Miembro
-                            </Link>
+                        <div className="flex items-center space-x-4">
+                            <div className="hidden md:flex space-x-1">
+                                <Link
+                                    to="/"
+                                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${location.pathname === '/'
+                                        ? 'bg-orange-500 text-white shadow-md'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        }`}
+                                >
+                                    Miembros
+                                </Link>
+                                <Link
+                                    to="/register-member"
+                                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${location.pathname === '/register-member'
+                                        ? 'bg-orange-500 text-white shadow-md'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        }`}
+                                >
+                                    Registrar Miembro
+                                </Link>
+                                {user && isAdmin(user.role) && (
+                                    <Link
+                                        to="/users"
+                                        className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${location.pathname === '/users'
+                                            ? 'bg-orange-500 text-white shadow-md'
+                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        Usuarios
+                                    </Link>
+                                )}
+                            </div>
+
+                            {user && (
+                                <div className="flex items-center space-x-3">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-gray-600">{user.email}</span>
+                                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${isAdmin(user.role)
+                                                ? 'bg-orange-100 text-orange-800'
+                                                : 'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {isAdmin(user.role) ? 'Admin' : 'Usuario'}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="px-4 py-2 text-sm border-2 border-black bg-white text-black font-semibold rounded-lg hover:bg-gray-50 transition-all duration-300"
+                                    >
+                                        Cerrar Sesión
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </nav>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {children}
+                <Outlet />
             </main>
         </div>
     );

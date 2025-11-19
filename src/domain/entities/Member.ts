@@ -1,5 +1,6 @@
 export interface Member {
     id: string;
+    userId: string;
     name: string;
     email: string;
     dateOfBirth: Date;
@@ -9,4 +10,5 @@ export interface Member {
 }
 
 export type CreateMemberDTO = Omit<Member, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateMemberDTO = Partial<CreateMemberDTO>;
+export type UpdateMemberDTO = Partial<Omit<CreateMemberDTO, 'userId'>>;
+

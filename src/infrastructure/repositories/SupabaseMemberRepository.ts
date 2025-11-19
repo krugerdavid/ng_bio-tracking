@@ -4,9 +4,17 @@ import { supabase } from '../supabase/client';
 
 export class SupabaseMemberRepository implements IMemberRepository {
     async create(data: CreateMemberDTO): Promise<Member> {
+        // Get current authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            throw new Error('User must be authenticated to create members');
+        }
+
         const { data: member, error } = await supabase
             .from('members')
             .insert({
+                user_id: user.id,
                 name: data.name,
                 email: data.email,
                 date_of_birth: this.formatDate(data.dateOfBirth),
@@ -85,6 +93,7 @@ export class SupabaseMemberRepository implements IMemberRepository {
     private mapToMember(data: any): Member {
         return {
             id: data.id,
+            userId: data.user_id,
             name: data.name,
             email: data.email,
             dateOfBirth: new Date(data.date_of_birth),
