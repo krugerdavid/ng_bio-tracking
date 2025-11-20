@@ -18,6 +18,8 @@ import { MemberRepositoryImpl } from "@infrastructure/member/MemberRepositoryImp
 import { BioimpedanceRepositoryImpl } from "@infrastructure/bioimpedance/BioimpedanceRepositoryImpl";
 import { AuthRepositoryImpl } from "@infrastructure/auth/AuthRepositoryImpl";
 import { UserProfileRepositoryImpl } from "@infrastructure/user/UserProfileRepositoryImpl";
+import { PaymentRepositoryImpl } from "@infrastructure/payment/PaymentRepositoryImpl";
+import { MembershipPlanRepositoryImpl } from "@infrastructure/payment/MembershipPlanRepositoryImpl";
 
 // Domain Services
 import { MemberDomainService } from "@domain/member/MemberDomainService";
@@ -43,6 +45,12 @@ import { CreateUserUseCase } from "@application/admin/use-cases/CreateUserUseCas
 import { ListUsersUseCase } from "@application/admin/use-cases/ListUsersUseCase";
 import { DeleteUserUseCase } from "@application/admin/use-cases/DeleteUserUseCase";
 
+// Use Cases - Payment
+import { RecordPaymentUseCase } from "@application/payment/use-cases/RecordPaymentUseCase";
+import { GetPaymentStatusUseCase } from "@application/payment/use-cases/GetPaymentStatusUseCase";
+import { UpdateMembershipPlanUseCase } from "@application/payment/use-cases/UpdateMembershipPlanUseCase";
+import { GetMembershipPlanUseCase } from "@application/payment/use-cases/GetMembershipPlanUseCase";
+
 // Infrastructure Services
 container.bind(TYPES.SupabaseClient).toConstantValue(supabase);
 
@@ -54,6 +62,10 @@ container.bind(TYPES.BioimpedanceRepository).to(BioimpedanceRepositoryImpl).inSi
 container.bind(TYPES.AuthRepository).to(AuthRepositoryImpl).inSingletonScope();
 
 container.bind(TYPES.UserProfileRepository).to(UserProfileRepositoryImpl).inSingletonScope();
+
+container.bind(TYPES.PaymentRepository).to(PaymentRepositoryImpl).inSingletonScope();
+
+container.bind(TYPES.MembershipPlanRepository).to(MembershipPlanRepositoryImpl).inSingletonScope();
 
 // Domain Services
 container.bind(TYPES.MemberDomainService).to(MemberDomainService).inSingletonScope();
@@ -87,5 +99,14 @@ container.bind(TYPES.CreateUserUseCase).to(CreateUserUseCase).inSingletonScope()
 container.bind(TYPES.ListUsersUseCase).to(ListUsersUseCase).inSingletonScope();
 
 container.bind(TYPES.DeleteUserUseCase).to(DeleteUserUseCase).inSingletonScope();
+
+// Use Cases - Payment
+container.bind(TYPES.RecordPaymentUseCase).to(RecordPaymentUseCase).inSingletonScope();
+
+container.bind(TYPES.GetPaymentStatusUseCase).to(GetPaymentStatusUseCase).inSingletonScope();
+
+container.bind(TYPES.UpdateMembershipPlanUseCase).to(UpdateMembershipPlanUseCase).inSingletonScope();
+
+container.bind(TYPES.GetMembershipPlanUseCase).to(GetMembershipPlanUseCase).inSingletonScope();
 
 export { container };

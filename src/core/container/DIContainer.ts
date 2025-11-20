@@ -27,6 +27,8 @@ export const TYPES = {
   BioimpedanceRepository: Symbol.for("BioimpedanceRepository"),
   AuthRepository: Symbol.for("AuthRepository"),
   UserProfileRepository: Symbol.for("UserProfileRepository"),
+  PaymentRepository: Symbol.for("PaymentRepository"),
+  MembershipPlanRepository: Symbol.for("MembershipPlanRepository"),
 
   // Domain Services
   MemberDomainService: Symbol.for("MemberDomainService"),
@@ -54,4 +56,10 @@ export const TYPES = {
   CreateUserUseCase: Symbol.for("CreateUserUseCase"),
   ListUsersUseCase: Symbol.for("ListUsersUseCase"),
   DeleteUserUseCase: Symbol.for("DeleteUserUseCase"),
+
+  // Use Cases - Payment
+  RecordPaymentUseCase: Symbol.for("RecordPaymentUseCase"),
+  GetPaymentStatusUseCase: Symbol.for("GetPaymentStatusUseCase"),
+  UpdateMembershipPlanUseCase: Symbol.for("UpdateMembershipPlanUseCase"),
+  GetMembershipPlanUseCase: Symbol.for("GetMembershipPlanUseCase"),
 } as const;
