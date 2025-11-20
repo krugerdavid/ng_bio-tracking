@@ -28,23 +28,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
-          <div className="flex items-center justify-center mb-8">
-            <img src="/ngtraining.png" alt="NG Training Logo" className="h-24 w-auto" />
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 sm:p-8">
+          <div className="flex items-center justify-center mb-6 sm:mb-8">
+            <img src="/ngtraining.png" alt="NG Training Logo" className="h-16 sm:h-24 w-auto" />
           </div>
 
-          <h2 className="text-3xl font-bold text-center mb-1 text-gray-900">Bienvenido</h2>
-          <p className="text-center text-gray-600 mb-8">Inicia sesión para continuar</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-1 text-gray-900">Bienvenido</h2>
+          <p className="text-center text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">Inicia sesión para continuar</p>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                 Email
@@ -53,9 +53,11 @@ export default function LoginPage() {
                 type="email"
                 id="email"
                 required
+                autoComplete="email"
+                inputMode="email"
                 value={formData.email}
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+                className="w-full px-4 py-3 sm:py-3.5 text-base rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
                 placeholder="tu@email.com"
                 disabled={isLoading}
               />
@@ -69,9 +71,10 @@ export default function LoginPage() {
                 type="password"
                 id="password"
                 required
+                autoComplete="current-password"
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+                className="w-full px-4 py-3 sm:py-3.5 text-base rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
                 placeholder="••••••••"
                 disabled={isLoading}
               />
@@ -80,7 +83,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+              className="w-full px-6 py-3.5 sm:py-4 bg-orange-500 text-white text-base sm:text-lg font-semibold rounded-lg shadow-lg hover:bg-orange-600 active:bg-orange-700 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 touch-manipulation"
             >
               {isLoading ? (
                 <>

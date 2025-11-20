@@ -219,11 +219,11 @@ export function MemberDetailPage({
       {activeTab === "bioimpedancia" && (
         <div>
           {/* Bioimpedance Section Header */}
-          <div className="mb-6 flex justify-between items-center">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
             <h2 className="text-2xl font-bold text-gray-900">Registros de Bioimpedancia</h2>
             <button
               onClick={() => setShowBioModal(true)}
-              className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
+              className="w-full sm:w-auto px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 active:bg-orange-700 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 touch-manipulation"
             >
               + Nuevo Registro
             </button>
@@ -231,7 +231,7 @@ export function MemberDetailPage({
 
           {/* Latest Bioimpedance Values */}
           {latestBioimpedance ? (
-            <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
+            <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-xl font-bold text-gray-800">Últimos Valores</h3>
@@ -245,7 +245,7 @@ export function MemberDetailPage({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 <MetricCard
                   label="Estatura"
                   value={latestBioimpedance.height}
@@ -319,9 +319,9 @@ export function MemberDetailPage({
 
           {/* Historical Bioimpedance Records */}
           {historicalRecords.length > 0 && (
-            <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Historial de Registros</h3>
-              <div className="overflow-x-auto">
+            <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Historial de Registros</h3>
+              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
