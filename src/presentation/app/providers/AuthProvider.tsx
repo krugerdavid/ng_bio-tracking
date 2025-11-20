@@ -1,88 +1,87 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import type { User } from "@domain/user/entities/User";
-import { container } from "@core/container/bindings";
-import { TYPES } from "@core/container/DIContainer";
-import type { LoginUseCase } from "@application/auth/use-cases/LoginUseCase";
-import type { LogoutUseCase } from "@application/auth/use-cases/LogoutUseCase";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { container, TYPES } from "@core/container/DIContainer";
 import type { AuthRepository } from "@domain/auth/AuthRepository";
+import type { User } from "@domain/user/entities/User";
+import { Result } from "@core/types/Result";
+import { AuthContext, type AuthContextType, type AuthState } from "./AuthContext";
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-}
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    isLoading: true,
+    isAuthenticated: false,
+    error: null,
+  });
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const loginUseCase = container.get<LoginUseCase>(TYPES.LoginUseCase);
-  const logoutUseCase = container.get<LogoutUseCase>(TYPES.LogoutUseCase);
   const authRepository = container.get<AuthRepository>(TYPES.AuthRepository);
 
   useEffect(() => {
-    let isMounted = true;
-    let hasReceivedInitialState = false;
-
-    // Listen to auth changes - this will fire immediately with current state
-    // Similar to merchant-web's approach
-    const unsubscribe = authRepository.onAuthStateChange(async currentUser => {
-      if (isMounted) {
-        if (!hasReceivedInitialState) {
-          hasReceivedInitialState = true;
-          // First callback is the initial state
-          setUser(currentUser);
-          setLoading(false);
-        } else {
-          // Subsequent callbacks are state changes
-          setUser(currentUser);
-        }
-      }
+    const unsubscribe = authRepository.onAuthStateChange(async (user: User | null) => {
+      setAuthState(prev => ({
+        ...prev,
+        user,
+        isLoading: false,
+        isAuthenticated: user !== null,
+        error: null,
+      }));
     });
 
-    // Fallback: if onAuthStateChange doesn't fire within 3 seconds, set loading to false
-    // This handles cases where getUser() is slow or fails silently
-    const timeout = setTimeout(() => {
-      if (isMounted && !hasReceivedInitialState) {
-        console.warn("Auth state change did not fire within timeout, setting loading to false");
-        setUser(null);
-        setLoading(false);
-      }
-    }, 3000);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeout);
-      unsubscribe();
-    };
+    return unsubscribe;
   }, [authRepository]);
 
-  const login = async (email: string, password: string) => {
-    const result = await loginUseCase.execute(email, password);
+  const login = useCallback(
+    async (email: string, password: string): Promise<Result<void>> => {
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const result = await authRepository.login(email, password);
+
+      if (result.isError()) {
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          isAuthenticated: false,
+          error: result.getError(),
+        }));
+        return Result.error(result.getError());
+      }
+
+      // Auth state will be updated by onAuthStateChange listener
+      return Result.success(undefined);
+    },
+    [authRepository]
+  );
+
+  const logout = useCallback(async (): Promise<Result<void>> => {
+    setAuthState(prev => ({ ...prev, isLoading: true }));
+
+    const result = await authRepository.logout();
+
     if (result.isError()) {
-      throw new Error(result.getError());
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: result.getError(),
+      }));
+      return Result.error(result.getError());
     }
-    setUser(result.getValue());
-  };
 
-  const logout = async () => {
-    const result = await logoutUseCase.execute();
-    if (result.isError()) {
-      throw new Error(result.getError());
-    }
-    setUser(null);
-  };
+    // Auth state will be updated by onAuthStateChange listener
+    return Result.success(undefined);
+  }, [authRepository]);
 
-  return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>;
-}
+  const clearAuthError = useCallback(() => {
+    setAuthState(prev => ({ ...prev, error: null }));
+  }, []);
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const contextValue = useMemo<AuthContextType>(
+    () => ({
+      authState,
+      login,
+      logout,
+      clearAuthError,
+    }),
+    [authState, login, logout, clearAuthError]
+  );
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }

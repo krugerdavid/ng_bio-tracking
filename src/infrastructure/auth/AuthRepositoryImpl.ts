@@ -69,71 +69,22 @@ export class AuthRepositoryImpl implements AuthRepository {
   }
 
   onAuthStateChange(callback: (user: User | null) => void): () => void {
-    let initialCallbackFired = false;
-
-    // Get initial state immediately - this should fire the callback ASAP
-    this.supabase.auth
-      .getUser()
-      .then(async ({ data: { user: authUser }, error }) => {
-        if (error || !authUser) {
-          if (!initialCallbackFired) {
-            initialCallbackFired = true;
-            callback(null);
-          }
-          return;
-        }
-
-        try {
-          const user = await this.mapToUser(authUser);
-          if (!initialCallbackFired) {
-            initialCallbackFired = true;
-            callback(user);
-          }
-        } catch (error) {
-          console.error("Error mapping user in initial auth state:", error);
-          if (!initialCallbackFired) {
-            initialCallbackFired = true;
-            callback(null);
-          }
-        }
-      })
-      .catch(error => {
-        console.error("Error getting initial auth state:", error);
-        if (!initialCallbackFired) {
-          initialCallbackFired = true;
-          callback(null);
-        }
-      });
+    // Get initial state immediately
+    this.getInitialAuthState(callback);
 
     // Subscribe to future changes
-    // Note: onAuthStateChange may also fire immediately with INITIAL_SESSION event
     const {
       data: { subscription },
-    } = this.supabase.auth.onAuthStateChange(async (event, session) => {
-      // Skip INITIAL_SESSION if we already handled it with getUser()
-      if (event === "INITIAL_SESSION" && initialCallbackFired) {
-        return;
-      }
-
+    } = this.supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         try {
           const user = await this.mapToUser(session.user);
-          if (!initialCallbackFired) {
-            initialCallbackFired = true;
-          }
           callback(user);
         } catch (error) {
           console.error("Error mapping user in auth state change:", error);
-          if (!initialCallbackFired) {
-            initialCallbackFired = true;
-          }
           callback(null);
         }
       } else {
-        // No session - user is logged out
-        if (!initialCallbackFired) {
-          initialCallbackFired = true;
-        }
         callback(null);
       }
     });
@@ -143,25 +94,35 @@ export class AuthRepositoryImpl implements AuthRepository {
     };
   }
 
+  private async getInitialAuthState(callback: (user: User | null) => void): Promise<void> {
+    try {
+      const result = await this.getCurrentUser();
+      if (result.isSuccess()) {
+        callback(result.getValue());
+      } else {
+        callback(null);
+      }
+    } catch (error) {
+      console.error("Error getting initial auth state:", error);
+      callback(null);
+    }
+  }
+
   private async mapToUser(authUser: { id: string; email?: string | null; created_at: string }): Promise<User> {
-    // Fetch user profile to get role
-    // If profile doesn't exist or query fails, default to USER role
     let role: Role = Role.USER;
 
     try {
-      const { data: profile, error } = await this.supabase
+      const { data: profile } = await this.supabase
         .from("user_profiles")
         .select("role")
         .eq("user_id", authUser.id)
         .single();
 
-      // Only use profile role if query succeeded and profile exists
-      if (!error && profile?.role) {
+      if (profile?.role) {
         role = profile.role as Role;
       }
     } catch (error) {
       // Silently fail and use default role
-      // This allows users to login even if profile doesn't exist yet
       console.warn("Could not fetch user profile, using default role:", error);
     }
 

@@ -1,18 +1,21 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from "../providers/AuthProvider";
+import { useAuth } from "@presentation/shared/hooks/useAuth";
 import { isAdmin } from "@domain/shared/value-objects/Role";
 
 export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { authState, logout } = useAuth();
+  const user = authState.user;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/login");
+    const result = await logout();
+    if (result.isSuccess()) {
+      navigate("/login");
+    }
   };
 
   // Close dropdown when clicking outside
