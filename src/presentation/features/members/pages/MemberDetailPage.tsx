@@ -85,6 +85,11 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
     return age;
   };
 
+  // Get the most recent bioimpedance record
+  const latestBioimpedance = details.bioimpedances.length > 0 ? details.bioimpedances[0] : null;
+  // Get historical records (excluding the latest one)
+  const historicalRecords = details.bioimpedances.slice(1);
+
   return (
     <div>
       {/* Member Header */}
@@ -113,7 +118,7 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
 
       {/* Bioimpedance Section */}
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Historial de Bioimpedancia</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Bioimpedancia</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
@@ -248,9 +253,67 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
         </div>
       )}
 
-      {/* History */}
-      {details.bioimpedances.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-12 text-center">
+      {/* Latest Bioimpedance Values */}
+      {latestBioimpedance ? (
+        <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-gray-800">Últimos Valores</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {new Date(latestBioimpedance.date).toLocaleDateString("es-ES", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-600 font-semibold mb-1">Estatura</p>
+              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.height} cm</p>
+            </div>
+            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-600 font-semibold mb-1">Peso</p>
+              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.weight} kg</p>
+            </div>
+            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-600 font-semibold mb-1">IMC</p>
+              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.imc}</p>
+            </div>
+            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-600 font-semibold mb-1">% Grasa</p>
+              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.bodyFatPercentage}%</p>
+            </div>
+            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-600 font-semibold mb-1">% Músculo</p>
+              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.muscleMassPercentage}%</p>
+            </div>
+            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-600 font-semibold mb-1">KCAL</p>
+              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.kcal}</p>
+            </div>
+            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-600 font-semibold mb-1">Edad Metabólica</p>
+              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.metabolicAge} años</p>
+            </div>
+            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-600 font-semibold mb-1">% Grasa Visceral</p>
+              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.visceralFatPercentage}%</p>
+            </div>
+          </div>
+
+          {latestBioimpedance.notes && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">
+                <span className="font-semibold">Notas:</span> {latestBioimpedance.notes}
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-12 text-center">
           <div className="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
             <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -264,65 +327,74 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
           <h3 className="text-xl font-semibold text-gray-700 mb-2">No hay registros de bioimpedancia</h3>
           <p className="text-gray-500">Comienza agregando el primer registro</p>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {details.bioimpedances.map(bio => (
-            <div key={bio.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-bold text-gray-800">
-                  {new Date(bio.date).toLocaleDateString("es-ES", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </h3>
-                <span className="text-sm text-gray-500">{new Date(bio.createdAt).toLocaleDateString("es-ES")}</span>
-              </div>
+      )}
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">Estatura</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.height} cm</p>
+      {/* Historical Records */}
+      {historicalRecords.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Historial</h3>
+          <div className="space-y-4">
+            {historicalRecords.map(bio => (
+              <div
+                key={bio.id}
+                className="bg-white rounded-xl shadow-md border border-gray-200 p-5 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <h4 className="text-lg font-semibold text-gray-800">
+                    {new Date(bio.date).toLocaleDateString("es-ES", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </h4>
+                  <span className="text-xs text-gray-500">{new Date(bio.createdAt).toLocaleDateString("es-ES")}</span>
                 </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">Peso</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.weight} kg</p>
-                </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">IMC</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.imc}</p>
-                </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">% Grasa</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.bodyFatPercentage}%</p>
-                </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">% Músculo</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.muscleMassPercentage}%</p>
-                </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">KCAL</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.kcal}</p>
-                </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">Edad Metabólica</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.metabolicAge} años</p>
-                </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">% Grasa Visceral</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.visceralFatPercentage}%</p>
-                </div>
-              </div>
 
-              {bio.notes && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold">Notas:</span> {bio.notes}
-                  </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 font-medium mb-1">Estatura</p>
+                    <p className="text-sm font-bold text-gray-900">{bio.height} cm</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 font-medium mb-1">Peso</p>
+                    <p className="text-sm font-bold text-gray-900">{bio.weight} kg</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 font-medium mb-1">IMC</p>
+                    <p className="text-sm font-bold text-gray-900">{bio.imc}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 font-medium mb-1">% Grasa</p>
+                    <p className="text-sm font-bold text-gray-900">{bio.bodyFatPercentage}%</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 font-medium mb-1">% Músculo</p>
+                    <p className="text-sm font-bold text-gray-900">{bio.muscleMassPercentage}%</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 font-medium mb-1">KCAL</p>
+                    <p className="text-sm font-bold text-gray-900">{bio.kcal}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 font-medium mb-1">Edad Metab.</p>
+                    <p className="text-sm font-bold text-gray-900">{bio.metabolicAge}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 font-medium mb-1">% Visceral</p>
+                    <p className="text-sm font-bold text-gray-900">{bio.visceralFatPercentage}%</p>
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {bio.notes && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-xs text-gray-600">
+                      <span className="font-semibold">Notas:</span> {bio.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

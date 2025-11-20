@@ -106,7 +106,7 @@ export class BioimpedanceRepositoryImpl implements BioimpedanceRepository {
     return {
       id: data.id,
       memberId: data.member_id,
-      date: new Date(data.date),
+      date: this.parseDateString(data.date),
       height: parseFloat(String(data.height)),
       weight: parseFloat(String(data.weight)),
       imc: parseFloat(String(data.imc)),
@@ -118,6 +118,23 @@ export class BioimpedanceRepositoryImpl implements BioimpedanceRepository {
       notes: data.notes ?? undefined,
       createdAt: new Date(data.created_at),
     };
+  }
+
+  /**
+   * Parse a date string (YYYY-MM-DD) as a local date, not UTC.
+   * This prevents timezone issues where dates can shift by one day.
+   */
+  private parseDateString(dateString: string): Date {
+    // If the date string is in format YYYY-MM-DD, parse it as local date
+    const parts = dateString.split("-");
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+      const day = parseInt(parts[2], 10);
+      return new Date(year, month, day);
+    }
+    // Fallback to standard Date parsing for other formats
+    return new Date(dateString);
   }
 
   private formatDate(date: Date): string {

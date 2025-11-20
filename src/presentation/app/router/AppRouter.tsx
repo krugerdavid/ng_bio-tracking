@@ -1,11 +1,21 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import AppLayout from "./AppLayout";
 import { PrivateRoute } from "./PrivateRoute";
 import LoginPage from "../../features/auth/pages/LoginPage";
-import MemberListPageController from "../../features/members/pages/MemberListPageController";
-import MemberDetailPageController from "../../features/members/pages/MemberDetailPageController";
-import RegisterMemberPageController from "../../features/members/pages/RegisterMemberPageController";
-import UserManagementPageController from "../../features/admin/pages/UserManagementPageController";
+
+// Lazy load page controllers to avoid loading all data on login
+const MemberListPageController = lazy(() => import("../../features/members/pages/MemberListPageController"));
+const MemberDetailPageController = lazy(() => import("../../features/members/pages/MemberDetailPageController"));
+const RegisterMemberPageController = lazy(() => import("../../features/members/pages/RegisterMemberPageController"));
+const UserManagementPageController = lazy(() => import("../../features/admin/pages/UserManagementPageController"));
+
+// Loading component for lazy loaded routes
+const PageLoader = () => (
+  <div className="flex justify-center items-center h-64">
+    <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
+  </div>
+);
 
 // Routes configuration - similar to merchant-web
 export const routesConfig = [
@@ -21,23 +31,43 @@ export const routesConfig = [
         children: [
           {
             path: "/",
-            element: <MemberListPageController />,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <MemberListPageController />
+              </Suspense>
+            ),
           },
           {
             path: "/members",
-            element: <MemberListPageController />,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <MemberListPageController />
+              </Suspense>
+            ),
           },
           {
             path: "/register-member",
-            element: <RegisterMemberPageController />,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RegisterMemberPageController />
+              </Suspense>
+            ),
           },
           {
             path: "/member/:memberId",
-            element: <MemberDetailPageController />,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <MemberDetailPageController />
+              </Suspense>
+            ),
           },
           {
             path: "/users",
-            element: <UserManagementPageController />,
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <UserManagementPageController />
+              </Suspense>
+            ),
           },
         ],
       },
