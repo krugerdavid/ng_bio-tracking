@@ -49,7 +49,7 @@ export default function MemberListPage() {
                     Miembros Registrados
                 </h2>
                 <Link
-                    to="/register"
+                    to="/register-member"
                     className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
                 >
                     + Nuevo Miembro
@@ -66,7 +66,7 @@ export default function MemberListPage() {
                     <h3 className="text-xl font-semibold text-gray-700 mb-2">No hay miembros registrados</h3>
                     <p className="text-gray-500 mb-6">Comienza registrando tu primer miembro</p>
                     <Link
-                        to="/register"
+                        to="/register-member"
                         className="inline-block px-6 py-3 bg-orange-500 text-gray-900 font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
                     >
                         Registrar Primer Miembro

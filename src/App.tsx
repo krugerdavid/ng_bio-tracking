@@ -17,6 +17,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<MemberListPage />} />
+          <Route path="/members" element={<MemberListPage />} />
           <Route path="/register-member" element={<RegisterMemberPage />} />
           <Route path="/member/:memberId" element={<MemberDetailPage />} />
           <Route path="/users" element={<UserManagementPage />} />

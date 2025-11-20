@@ -32,15 +32,15 @@ export default function LoginPage() {
             <div className="max-w-md w-full">
                 <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
                     <div className="flex items-center justify-center mb-8">
-                        <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center">
-                            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
+                        <img
+                            src="/ngtraining.png"
+                            alt="NG Training Logo"
+                            className="h-16 w-auto"
+                        />
                     </div>
 
                     <h2 className="text-3xl font-bold text-center mb-2 text-gray-900">
-                        Bienvenido a BioTracker
+                        Bienvenido a NG Training
                     </h2>
                     <p className="text-center text-gray-600 mb-8">
                         Inicia sesión para continuar
@@ -88,7 +88,7 @@ export default function LoginPage() {
                             disabled={loading}
                             className="w-full px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                            {loading ? 'Iniciando sesión' : 'Iniciar Sesión'}
                         </button>
                     </form>
                 </div>
