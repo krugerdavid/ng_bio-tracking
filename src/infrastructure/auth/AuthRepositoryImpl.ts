@@ -96,7 +96,13 @@ export class AuthRepositoryImpl implements AuthRepository {
 
   private async getInitialAuthState(callback: (user: User | null) => void): Promise<void> {
     try {
-      const result = await this.getCurrentUser();
+      // Add a timeout to prevent infinite loading
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Auth initialization timeout")), 10000)
+      );
+
+      const result = (await Promise.race([this.getCurrentUser(), timeoutPromise])) as Result<User | null>;
+
       if (result.isSuccess()) {
         callback(result.getValue());
       } else {
@@ -104,6 +110,7 @@ export class AuthRepositoryImpl implements AuthRepository {
       }
     } catch (error) {
       console.error("Error getting initial auth state:", error);
+      // Ensure we always call callback to stop loading state
       callback(null);
     }
   }
@@ -112,11 +119,16 @@ export class AuthRepositoryImpl implements AuthRepository {
     let role: Role = Role.USER;
 
     try {
-      const { data: profile } = await this.supabase
-        .from("user_profiles")
-        .select("role")
-        .eq("user_id", authUser.id)
-        .single();
+      // Add timeout for profile fetch
+      const profilePromise = this.supabase.from("user_profiles").select("role").eq("user_id", authUser.id).single();
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Profile fetch timeout")), 5000)
+      );
+
+      const { data: profile } = (await Promise.race([profilePromise, timeoutPromise])) as {
+        data: { role: string } | null;
+      };
 
       if (profile?.role) {
         role = profile.role as Role;
