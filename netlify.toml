@@ -1,0 +1,11 @@
+[build]
+  # Build command for Vite
+  command = "npm run build"
+  # Output directory for the built files
+  publish = "dist"
+
+[[redirects]]
+  # Redirect all routes to index.html for client-side routing
+  from = "/*"
+  to = "/index.html"
+  status = 200
