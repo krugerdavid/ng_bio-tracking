@@ -1,7 +1,9 @@
+import "reflect-metadata"; // Required for InversifyJS decorators
+import '@core/container/bindings'; // Initialize DI container
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from '@presentation/context/AuthContext.tsx'
+import { AuthProvider } from '@presentation/app/providers/AuthProvider'
 import './index.css'
 import App from './App.tsx'
 
