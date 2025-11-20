@@ -9,6 +9,49 @@ interface MemberDetailPageProps {
   onSubmit: (bioData: CreateBioimpedanceDTO) => Promise<void>;
 }
 
+// Helper function to compare values and return indicator
+const getTrendIndicator = (current: number, previous: number | null): { icon: string; color: string } | null => {
+  if (previous === null) return null;
+
+  const diff = current - previous;
+  if (Math.abs(diff) < 0.01) return null; // Ignore very small differences
+
+  if (diff > 0) {
+    return { icon: "▲", color: "text-red-500" };
+  } else {
+    return { icon: "▼", color: "text-green-500" };
+  }
+};
+
+// Helper function to render metric with trend indicator
+const MetricCard = ({
+  label,
+  value,
+  unit,
+  trend,
+}: {
+  label: string;
+  value: number;
+  unit: string;
+  trend: { icon: string; color: string } | null;
+}) => (
+  <div className=" border border-gray-200 p-4 rounded-lg shadow-sm">
+    <div className="flex items-center justify-between mb-1">
+      <p className="text-xs text-gray-600 font-semibold">{label}</p>
+    </div>
+    <div className="flex items-center justify-between mb-1">
+      <p className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        {value} {unit}{" "}
+        {trend && (
+          <span className={`text-md ${trend.color} font-bold`} title={trend.icon === "▲" ? "Aumentó" : "Disminuyó"}>
+            {trend.icon}
+          </span>
+        )}
+      </p>
+    </div>
+  </div>
+);
+
 export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPageProps) {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -87,6 +130,8 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
 
   // Get the most recent bioimpedance record
   const latestBioimpedance = details.bioimpedances.length > 0 ? details.bioimpedances[0] : null;
+  // Get the previous record for comparison
+  const previousBioimpedance = details.bioimpedances.length > 1 ? details.bioimpedances[1] : null;
   // Get historical records (excluding the latest one)
   const historicalRecords = details.bioimpedances.slice(1);
 
@@ -270,38 +315,63 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-600 font-semibold mb-1">Estatura</p>
-              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.height} cm</p>
-            </div>
-            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-600 font-semibold mb-1">Peso</p>
-              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.weight} kg</p>
-            </div>
-            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-600 font-semibold mb-1">IMC</p>
-              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.imc}</p>
-            </div>
-            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-600 font-semibold mb-1">% Grasa</p>
-              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.bodyFatPercentage}%</p>
-            </div>
-            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-600 font-semibold mb-1">% Músculo</p>
-              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.muscleMassPercentage}%</p>
-            </div>
-            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-600 font-semibold mb-1">KCAL</p>
-              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.kcal}</p>
-            </div>
-            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-600 font-semibold mb-1">Edad Metabólica</p>
-              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.metabolicAge} años</p>
-            </div>
-            <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-600 font-semibold mb-1">% Grasa Visceral</p>
-              <p className="text-2xl font-bold text-gray-900">{latestBioimpedance.visceralFatPercentage}%</p>
-            </div>
+            <MetricCard
+              label="Estatura"
+              value={latestBioimpedance.height}
+              unit="cm"
+              trend={getTrendIndicator(latestBioimpedance.height, previousBioimpedance?.height ?? null)}
+            />
+            <MetricCard
+              label="Peso"
+              value={latestBioimpedance.weight}
+              unit="kg"
+              trend={getTrendIndicator(latestBioimpedance.weight, previousBioimpedance?.weight ?? null)}
+            />
+            <MetricCard
+              label="IMC"
+              value={latestBioimpedance.imc}
+              unit=""
+              trend={getTrendIndicator(latestBioimpedance.imc, previousBioimpedance?.imc ?? null)}
+            />
+            <MetricCard
+              label="% Grasa"
+              value={latestBioimpedance.bodyFatPercentage}
+              unit="%"
+              trend={getTrendIndicator(
+                latestBioimpedance.bodyFatPercentage,
+                previousBioimpedance?.bodyFatPercentage ?? null
+              )}
+            />
+            <MetricCard
+              label="% Músculo"
+              value={latestBioimpedance.muscleMassPercentage}
+              unit="%"
+              trend={getTrendIndicator(
+                latestBioimpedance.muscleMassPercentage,
+                previousBioimpedance?.muscleMassPercentage ?? null
+              )}
+            />
+            <MetricCard
+              label="KCAL"
+              value={latestBioimpedance.kcal}
+              unit=""
+              trend={getTrendIndicator(latestBioimpedance.kcal, previousBioimpedance?.kcal ?? null)}
+            />
+            <MetricCard
+              label="Edad Metabólica"
+              value={latestBioimpedance.metabolicAge}
+              unit="años"
+              trend={getTrendIndicator(latestBioimpedance.metabolicAge, previousBioimpedance?.metabolicAge ?? null)}
+            />
+            <MetricCard
+              label="% Grasa Visceral"
+              value={latestBioimpedance.visceralFatPercentage}
+              unit="%"
+              trend={getTrendIndicator(
+                latestBioimpedance.visceralFatPercentage,
+                previousBioimpedance?.visceralFatPercentage ?? null
+              )}
+            />
           </div>
 
           {latestBioimpedance.notes && (
