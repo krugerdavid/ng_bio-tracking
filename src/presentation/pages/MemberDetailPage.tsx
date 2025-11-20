@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import type { FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMemberDetailsUseCase, recordBioimpedanceUseCase } from '../../application/di/container';
-import type { MemberDetails } from '../../application/use-cases/GetMemberDetailsUseCase';
-import type { CreateBioimpedanceDTO } from '../../domain/entities/Bioimpedance';
+import { getMemberDetailsUseCase, recordBioimpedanceUseCase } from '@application/di/container';
+import type { MemberDetails } from '@application/use-cases/GetMemberDetailsUseCase';
+import type { CreateBioimpedanceDTO } from '@domain/entities/Bioimpedance';
 
 export default function MemberDetailPage() {
     const { memberId } = useParams<{ memberId: string }>();

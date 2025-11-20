@@ -1,5 +1,5 @@
-import type { User } from '../../../domain/entities/User';
-import type { IAuthRepository } from '../../../domain/repositories/IAuthRepository';
+import type { User } from '@domain/entities/User';
+import type { IAuthRepository } from '@domain/repositories/IAuthRepository';
 
 export class LoginUseCase {
     private authRepository: IAuthRepository;

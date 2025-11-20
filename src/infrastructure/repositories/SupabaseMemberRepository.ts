@@ -1,5 +1,5 @@
-import type { Member, CreateMemberDTO, UpdateMemberDTO } from '../../domain/entities/Member';
-import type { IMemberRepository } from '../../domain/repositories/IMemberRepository';
+import type { Member, CreateMemberDTO, UpdateMemberDTO } from '@domain/entities/Member';
+import type { IMemberRepository } from '@domain/repositories/IMemberRepository';
 import { supabase } from '../supabase/client';
 
 export class SupabaseMemberRepository implements IMemberRepository {

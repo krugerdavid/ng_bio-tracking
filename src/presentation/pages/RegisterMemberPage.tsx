@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { registerMemberUseCase } from '../../application/di/container';
-import type { CreateMemberDTO } from '../../domain/entities/Member';
+import { registerMemberUseCase } from '@application/di/container';
+import type { CreateMemberDTO } from '@domain/entities/Member';
 
 export default function RegisterMemberPage() {
     const navigate = useNavigate();

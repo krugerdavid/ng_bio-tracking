@@ -1,6 +1,6 @@
-import type { CreateBioimpedanceDTO, Bioimpedance } from '../../domain/entities/Bioimpedance';
-import type { IBioimpedanceRepository } from '../../domain/repositories/IBioimpedanceRepository';
-import type { IMemberRepository } from '../../domain/repositories/IMemberRepository';
+import type { Bioimpedance, CreateBioimpedanceDTO } from '@domain/entities/Bioimpedance';
+import type { IBioimpedanceRepository } from '@domain/repositories/IBioimpedanceRepository';
+import type { IMemberRepository } from '@domain/repositories/IMemberRepository';
 
 export class RecordBioimpedanceUseCase {
     private bioimpedanceRepository: IBioimpedanceRepository;

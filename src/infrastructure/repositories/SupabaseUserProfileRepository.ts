@@ -1,6 +1,6 @@
-import type { UserProfile, CreateUserProfileDTO, UpdateUserProfileDTO } from '../../domain/entities/UserProfile';
-import type { IUserProfileRepository } from '../../domain/repositories/IUserProfileRepository';
-import { Role } from '../../domain/value-objects/Role';
+import type { UserProfile, CreateUserProfileDTO, UpdateUserProfileDTO } from '@domain/entities/UserProfile';
+import type { IUserProfileRepository } from '@domain/repositories/IUserProfileRepository';
+import { Role } from '@domain/value-objects/Role';
 import { supabase } from '../supabase/client';
 import { edgeFunctions } from '../supabase/edgeFunctions';
 

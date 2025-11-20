@@ -1,5 +1,5 @@
-import type { UserProfile, CreateUserProfileDTO } from '../../../domain/entities/UserProfile';
-import type { IUserProfileRepository } from '../../../domain/repositories/IUserProfileRepository';
+import type { UserProfile, CreateUserProfileDTO } from '@domain/entities/UserProfile';
+import type { IUserProfileRepository } from '@domain/repositories/IUserProfileRepository';
 
 export class CreateUserUseCase {
     private userProfileRepository: IUserProfileRepository;

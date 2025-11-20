@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { listMembersUseCase } from '../../application/di/container';
-import type { Member } from '../../domain/entities/Member';
+import { listMembersUseCase } from '@application/di/container';
+import type { Member } from '@domain/entities/Member';
 
 export default function MemberListPage() {
     const [members, setMembers] = useState<Member[]>([]);

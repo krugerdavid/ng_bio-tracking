@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { User } from '../../domain/entities/User';
+import type { User } from '@domain/entities/User';
 import {
     loginUseCase,
     logoutUseCase,
     getCurrentUserUseCase,
-} from '../../application/di/container';
-import { supabase } from '../../infrastructure/supabase/client';
+} from '@application/di/container';
+import { supabase } from '@infrastructure/supabase/client';
 
 interface AuthContextType {
     user: User | null;

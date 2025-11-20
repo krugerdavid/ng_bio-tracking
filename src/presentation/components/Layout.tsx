@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { isAdmin } from '../../domain/value-objects/Role';
+import { isAdmin } from '@domain/value-objects/Role';
 
 export default function Layout() {
     const location = useLocation();
@@ -66,8 +66,8 @@ export default function Layout() {
                                     <div className="flex items-center space-x-2">
                                         <span className="text-sm text-gray-600">{user.email}</span>
                                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${isAdmin(user.role)
-                                                ? 'bg-orange-100 text-orange-800'
-                                                : 'bg-gray-100 text-gray-800'
+                                            ? 'bg-orange-100 text-orange-800'
+                                            : 'bg-gray-100 text-gray-800'
                                             }`}>
                                             {isAdmin(user.role) ? 'Admin' : 'Usuario'}
                                         </span>

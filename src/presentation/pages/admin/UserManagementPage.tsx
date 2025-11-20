@@ -1,11 +1,11 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { Role, isAdmin } from '../../../domain/value-objects/Role';
+import { Role, isAdmin } from '@domain/value-objects/Role';
 import {
-createUserUseCase,
-listUsersUseCase,
-deleteUserUseCase
-} from '../../../application/di/container';
-import type { UserProfile } from '../../../domain/entities/UserProfile';
+    createUserUseCase,
+    listUsersUseCase,
+    deleteUserUseCase
+} from '@application/di/container';
+import type { UserProfile } from '@domain/entities/UserProfile';
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState<UserProfile[]>([]);

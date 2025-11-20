@@ -1,5 +1,5 @@
-import type { CreateMemberDTO, Member } from '../../domain/entities/Member';
-import type { IMemberRepository } from '../../domain/repositories/IMemberRepository';
+import type { Member, CreateMemberDTO } from '@domain/entities/Member';
+import type { IMemberRepository } from '@domain/repositories/IMemberRepository';
 
 export class RegisterMemberUseCase {
     private memberRepository: IMemberRepository;

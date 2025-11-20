@@ -1,4 +1,4 @@
-import type { IUserProfileRepository } from '../../../domain/repositories/IUserProfileRepository';
+import type { IUserProfileRepository } from '@domain/repositories/IUserProfileRepository';
 
 export class DeleteUserUseCase {
     private userProfileRepository: IUserProfileRepository;

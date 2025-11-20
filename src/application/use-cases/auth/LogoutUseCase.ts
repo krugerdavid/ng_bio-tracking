@@ -1,4 +1,4 @@
-import type { IAuthRepository } from '../../../domain/repositories/IAuthRepository';
+import type { IAuthRepository } from '@domain/repositories/IAuthRepository';
 
 export class LogoutUseCase {
     private authRepository: IAuthRepository;

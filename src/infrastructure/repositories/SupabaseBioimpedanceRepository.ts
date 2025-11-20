@@ -1,5 +1,5 @@
-import type { Bioimpedance, CreateBioimpedanceDTO } from '../../domain/entities/Bioimpedance';
-import type { IBioimpedanceRepository } from '../../domain/repositories/IBioimpedanceRepository';
+import type { Bioimpedance, CreateBioimpedanceDTO } from '@domain/entities/Bioimpedance';
+import type { IBioimpedanceRepository } from '@domain/repositories/IBioimpedanceRepository';
 import { supabase } from '../supabase/client';
 
 export class SupabaseBioimpedanceRepository implements IBioimpedanceRepository {

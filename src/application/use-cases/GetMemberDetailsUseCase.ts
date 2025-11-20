@@ -1,7 +1,7 @@
-import type { IMemberRepository } from '../../domain/repositories/IMemberRepository';
-import type { IBioimpedanceRepository } from '../../domain/repositories/IBioimpedanceRepository';
-import type { Member } from '../../domain/entities/Member';
-import type { Bioimpedance } from '../../domain/entities/Bioimpedance';
+import type { Member } from '@domain/entities/Member';
+import type { Bioimpedance } from '@domain/entities/Bioimpedance';
+import type { IMemberRepository } from '@domain/repositories/IMemberRepository';
+import type { IBioimpedanceRepository } from '@domain/repositories/IBioimpedanceRepository';
 
 export interface MemberDetails {
     member: Member;

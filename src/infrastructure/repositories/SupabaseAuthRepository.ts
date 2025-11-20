@@ -1,6 +1,6 @@
-import type { User } from '../../domain/entities/User';
-import type { IAuthRepository } from '../../domain/repositories/IAuthRepository';
-import { Role } from '../../domain/value-objects/Role';
+import type { User } from '@domain/entities/User';
+import type { IAuthRepository } from '@domain/repositories/IAuthRepository';
+import { Role } from '@domain/value-objects/Role';
 import { supabase } from '../supabase/client';
 
 export class SupabaseAuthRepository implements IAuthRepository {
