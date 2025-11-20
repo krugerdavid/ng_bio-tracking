@@ -13,14 +13,14 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
+    height: "",
     weight: "",
+    imc: "",
     bodyFatPercentage: "",
     muscleMassPercentage: "",
-    waterPercentage: "",
-    bmi: "",
-    visceralFat: "",
-    boneMass: "",
-    basalMetabolicRate: "",
+    kcal: "",
+    metabolicAge: "",
+    visceralFatPercentage: "",
     notes: "",
   });
 
@@ -32,14 +32,14 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
       const bioData: CreateBioimpedanceDTO = {
         memberId: details.member.id,
         date: new Date(formData.date),
+        height: parseFloat(formData.height),
         weight: parseFloat(formData.weight),
+        imc: parseFloat(formData.imc),
         bodyFatPercentage: parseFloat(formData.bodyFatPercentage),
         muscleMassPercentage: parseFloat(formData.muscleMassPercentage),
-        waterPercentage: parseFloat(formData.waterPercentage),
-        bmi: parseFloat(formData.bmi),
-        visceralFat: parseFloat(formData.visceralFat),
-        boneMass: parseFloat(formData.boneMass),
-        basalMetabolicRate: parseFloat(formData.basalMetabolicRate),
+        kcal: parseFloat(formData.kcal),
+        metabolicAge: parseFloat(formData.metabolicAge),
+        visceralFatPercentage: parseFloat(formData.visceralFatPercentage),
         notes: formData.notes || undefined,
       };
 
@@ -47,14 +47,14 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
       setShowForm(false);
       setFormData({
         date: new Date().toISOString().split("T")[0],
+        height: "",
         weight: "",
+        imc: "",
         bodyFatPercentage: "",
         muscleMassPercentage: "",
-        waterPercentage: "",
-        bmi: "",
-        visceralFat: "",
-        boneMass: "",
-        basalMetabolicRate: "",
+        kcal: "",
+        metabolicAge: "",
+        visceralFatPercentage: "",
         notes: "",
       });
     } catch (error) {
@@ -138,6 +138,18 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
               />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Estatura (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                required
+                value={formData.height}
+                onChange={e => setFormData({ ...formData, height: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+                placeholder="Ej: 175"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Peso (kg)</label>
               <input
                 type="number"
@@ -149,7 +161,18 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Grasa Corporal (%)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">IMC</label>
+              <input
+                type="number"
+                step="0.1"
+                required
+                value={formData.imc}
+                onChange={e => setFormData({ ...formData, imc: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">% de Grasa</label>
               <input
                 type="number"
                 step="0.1"
@@ -160,7 +183,7 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Masa Muscular (%)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">% de Músculo</label>
               <input
                 type="number"
                 step="0.1"
@@ -171,55 +194,35 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Agua (%)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">KCAL</label>
+              <input
+                type="number"
+                required
+                value={formData.kcal}
+                onChange={e => setFormData({ ...formData, kcal: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+                placeholder="Calorías"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Edad Metabólica</label>
+              <input
+                type="number"
+                required
+                value={formData.metabolicAge}
+                onChange={e => setFormData({ ...formData, metabolicAge: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+                placeholder="Años"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">% Grasa Visceral</label>
               <input
                 type="number"
                 step="0.1"
                 required
-                value={formData.waterPercentage}
-                onChange={e => setFormData({ ...formData, waterPercentage: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">IMC</label>
-              <input
-                type="number"
-                step="0.1"
-                required
-                value={formData.bmi}
-                onChange={e => setFormData({ ...formData, bmi: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Grasa Visceral (1-59)</label>
-              <input
-                type="number"
-                required
-                value={formData.visceralFat}
-                onChange={e => setFormData({ ...formData, visceralFat: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Masa Ósea (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                required
-                value={formData.boneMass}
-                onChange={e => setFormData({ ...formData, boneMass: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Tasa Metabólica Basal (kcal/día)</label>
-              <input
-                type="number"
-                required
-                value={formData.basalMetabolicRate}
-                onChange={e => setFormData({ ...formData, basalMetabolicRate: e.target.value })}
+                value={formData.visceralFatPercentage}
+                onChange={e => setFormData({ ...formData, visceralFatPercentage: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
               />
             </div>
@@ -278,36 +281,36 @@ export function MemberDetailPage({ details, loading, onSubmit }: MemberDetailPag
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
+                  <p className="text-xs text-gray-500 font-semibold mb-1">Estatura</p>
+                  <p className="text-2xl font-bold text-gray-900">{bio.height} cm</p>
+                </div>
+                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
                   <p className="text-xs text-gray-500 font-semibold mb-1">Peso</p>
                   <p className="text-2xl font-bold text-gray-900">{bio.weight} kg</p>
                 </div>
                 <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">Grasa</p>
+                  <p className="text-xs text-gray-500 font-semibold mb-1">IMC</p>
+                  <p className="text-2xl font-bold text-gray-900">{bio.imc}</p>
+                </div>
+                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
+                  <p className="text-xs text-gray-500 font-semibold mb-1">% Grasa</p>
                   <p className="text-2xl font-bold text-gray-900">{bio.bodyFatPercentage}%</p>
                 </div>
                 <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">Músculo</p>
+                  <p className="text-xs text-gray-500 font-semibold mb-1">% Músculo</p>
                   <p className="text-2xl font-bold text-gray-900">{bio.muscleMassPercentage}%</p>
                 </div>
                 <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">Agua</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.waterPercentage}%</p>
+                  <p className="text-xs text-gray-500 font-semibold mb-1">KCAL</p>
+                  <p className="text-2xl font-bold text-gray-900">{bio.kcal}</p>
                 </div>
                 <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">IMC</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.bmi}</p>
+                  <p className="text-xs text-gray-500 font-semibold mb-1">Edad Metabólica</p>
+                  <p className="text-2xl font-bold text-gray-900">{bio.metabolicAge} años</p>
                 </div>
                 <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">Grasa Visceral</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.visceralFat}</p>
-                </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">Masa Ósea</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.boneMass} kg</p>
-                </div>
-                <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-sm">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">TMB</p>
-                  <p className="text-2xl font-bold text-gray-900">{bio.basalMetabolicRate}</p>
+                  <p className="text-xs text-gray-500 font-semibold mb-1">% Grasa Visceral</p>
+                  <p className="text-2xl font-bold text-gray-900">{bio.visceralFatPercentage}%</p>
                 </div>
               </div>
 

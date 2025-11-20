@@ -2,14 +2,14 @@ export interface Bioimpedance {
   id: string;
   memberId: string;
   date: Date;
-  weight: number; // in kg
-  bodyFatPercentage: number; // percentage
-  muscleMassPercentage: number; // percentage
-  waterPercentage: number; // percentage
-  bmi: number;
-  visceralFat: number; // level 1-59
-  boneMass: number; // in kg
-  basalMetabolicRate: number; // kcal/day
+  height: number; // altura en cm
+  weight: number; // peso en kg
+  imc: number; // Índice de Masa Corporal
+  bodyFatPercentage: number; // % de grasa
+  muscleMassPercentage: number; // % de musculo
+  kcal: number; // calorías
+  metabolicAge: number; // Edad Metabolica
+  visceralFatPercentage: number; // % grasa visceral
   notes?: string;
   createdAt: Date;
 }

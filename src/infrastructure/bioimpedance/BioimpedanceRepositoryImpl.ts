@@ -16,14 +16,14 @@ export class BioimpedanceRepositoryImpl implements BioimpedanceRepository {
         .insert({
           member_id: data.memberId,
           date: this.formatDate(data.date),
+          height: data.height,
           weight: data.weight,
+          imc: data.imc,
           body_fat_percentage: data.bodyFatPercentage,
           muscle_mass_percentage: data.muscleMassPercentage,
-          water_percentage: data.waterPercentage,
-          bmi: data.bmi,
-          visceral_fat: data.visceralFat,
-          bone_mass: data.boneMass,
-          basal_metabolic_rate: data.basalMetabolicRate,
+          kcal: data.kcal,
+          metabolic_age: data.metabolicAge,
+          visceral_fat_percentage: data.visceralFatPercentage,
           notes: data.notes,
         })
         .select()
@@ -92,14 +92,14 @@ export class BioimpedanceRepositoryImpl implements BioimpedanceRepository {
     id: string;
     member_id: string;
     date: string;
+    height: number | string;
     weight: number | string;
+    imc: number | string;
     body_fat_percentage: number | string;
     muscle_mass_percentage: number | string;
-    water_percentage: number | string;
-    bmi: number | string;
-    visceral_fat: number | string;
-    bone_mass: number | string;
-    basal_metabolic_rate: number;
+    kcal: number | string;
+    metabolic_age: number | string;
+    visceral_fat_percentage: number | string;
     notes: string | null;
     created_at: string;
   }): Bioimpedance {
@@ -107,14 +107,14 @@ export class BioimpedanceRepositoryImpl implements BioimpedanceRepository {
       id: data.id,
       memberId: data.member_id,
       date: new Date(data.date),
+      height: parseFloat(String(data.height)),
       weight: parseFloat(String(data.weight)),
+      imc: parseFloat(String(data.imc)),
       bodyFatPercentage: parseFloat(String(data.body_fat_percentage)),
       muscleMassPercentage: parseFloat(String(data.muscle_mass_percentage)),
-      waterPercentage: parseFloat(String(data.water_percentage)),
-      bmi: parseFloat(String(data.bmi)),
-      visceralFat: typeof data.visceral_fat === "number" ? data.visceral_fat : parseFloat(String(data.visceral_fat)),
-      boneMass: parseFloat(String(data.bone_mass)),
-      basalMetabolicRate: data.basal_metabolic_rate,
+      kcal: parseFloat(String(data.kcal)),
+      metabolicAge: parseFloat(String(data.metabolic_age)),
+      visceralFatPercentage: parseFloat(String(data.visceral_fat_percentage)),
       notes: data.notes ?? undefined,
       createdAt: new Date(data.created_at),
     };
