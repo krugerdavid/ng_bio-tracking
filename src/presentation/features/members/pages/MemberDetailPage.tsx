@@ -166,17 +166,25 @@ export function MemberDetailPage({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto">
       {/* Member Header */}
       <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{member.name}</h1>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-600">
-              <span>{member.email}</span>
-              <span className="hidden sm:block text-gray-400">·</span>
-              <span>{formatLocalDate(member.dateOfBirth)}</span>
-              <span className="hidden sm:block text-gray-400">·</span>
+            <p className="text-sm text-gray-600 mb-2 truncate">{member.email}</p>
+            <div className="flex items-center space-x-4 text-xs text-gray-500">
+              <span className="flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                {member.age} años
+              </span>
               <span className="capitalize">
                 {member.gender === "male" ? "M" : member.gender === "female" ? "F" : "O"}
               </span>
@@ -185,20 +193,28 @@ export function MemberDetailPage({
 
           {/* Payment Summary Badges */}
           {!paymentLoading && membershipPlan && paymentStatus && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className={`p-4 bg-gray-50 rounded-lg ${paymentStatus.isOverdue ? "border-2 border-red-500" : ""}`}>
-                <p className="text-xs text-gray-600 mb-1">Estado</p>
-                <p className={`text-lg font-bold ${paymentStatus.isOverdue ? "text-red-600" : "text-green-600"}`}>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              <div
+                className={`p-3  border rounded-lg shadow-sm ${paymentStatus.isOverdue ? "border-red-500 bg-red-50" : "border-gray-200 bg-white"}`}
+              >
+                <p className="text-xs  leading-none text-gray-600 mb-1">Estado</p>
+                <p
+                  className={`text-md sm:text-lg leading-tight font-bold ${paymentStatus.isOverdue ? "text-red-600" : "text-green-600"}`}
+                >
                   {paymentStatus.isOverdue ? formatCurrency(paymentStatus.totalDebt) : "Al día"}
                 </p>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Cuota Mensual</p>
-                <p className="text-lg font-bold text-gray-900">{formatCurrency(membershipPlan.monthlyFee)}</p>
+              <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <p className="text-xs leading-none  text-gray-600 mb-1">Cuota Mensual</p>
+                <p className="text-md sm:text-lg leading-tight font-bold text-gray-900">
+                  {formatCurrency(membershipPlan.monthlyFee)}
+                </p>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Frecuencia</p>
-                <p className="text-lg font-bold text-gray-900">{membershipPlan.weeklyFrequency}x por semana</p>
+              <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <p className="text-xs leading-none  text-gray-600 mb-1">Frecuencia</p>
+                <p className="text-md sm:text-lg leading-tight font-bold text-gray-900">
+                  {membershipPlan.weeklyFrequency}x por semana
+                </p>
               </div>
             </div>
           )}
@@ -217,15 +233,26 @@ export function MemberDetailPage({
 
       {/* Tab Content */}
       {activeTab === "bioimpedancia" && (
-        <div>
+        <div className="space-y-6">
           {/* Bioimpedance Section Header */}
-          <div className="mb-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-            <h2 className="text-2xl font-bold text-gray-900">Registros de Bioimpedancia</h2>
+          <div className="flex flex-row justify-between items-center gap-3 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Gestión Bioimpedancia</h2>
             <button
               onClick={() => setShowBioModal(true)}
-              className="w-full sm:w-auto px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 active:bg-orange-700 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 touch-manipulation"
+              className="
+                flex items-center justify-center gap-2
+                w-12 h-12 sm:w-auto sm:h-auto
+                rounded-full sm:rounded-lg
+                p-0 sm:px-6 sm:py-3
+                bg-orange-500 text-white font-semibold 
+                shadow-lg hover:bg-orange-600 
+                active:bg-orange-700 transform hover:-translate-y-0.5 active:translate-y-0 
+                transition-all duration-300 touch-manipulation
+              "
+              aria-label="Registrar Pago"
             >
-              + Nuevo Registro
+              <span className="text-2xl sm:text-xl leading-none mb-1 sm:mb-0">+</span>
+              <span className="hidden sm:block">Registrar</span>
             </button>
           </div>
 
@@ -419,18 +446,14 @@ export function MemberDetailPage({
       )}
 
       {activeTab === "pagos" && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestión de Pagos</h2>
-
-          <PaymentSection
-            memberId={details.member.id}
-            membershipPlan={membershipPlan}
-            paymentStatus={paymentStatus}
-            loading={paymentLoading}
-            onRecordPayment={onRecordPayment}
-            onUpdatePlan={onUpdatePlan}
-          />
-        </div>
+        <PaymentSection
+          memberId={details.member.id}
+          membershipPlan={membershipPlan}
+          paymentStatus={paymentStatus}
+          loading={paymentLoading}
+          onRecordPayment={onRecordPayment}
+          onUpdatePlan={onUpdatePlan}
+        />
       )}
 
       {/* Bioimpedance Registration Modal */}

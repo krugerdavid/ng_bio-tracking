@@ -96,14 +96,38 @@ export function PaymentSection({
     }).format(amount);
   };
 
-  const formatMonthName = (monthStr: string) => {
+  const formatShortMonth = (monthStr: string) => {
     const [year, month] = monthStr.split("-");
     const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return date.toLocaleDateString("es-ES", { year: "numeric", month: "long" });
+    // Format: "AGO 2024"
+    const shortMonth = date.toLocaleDateString("es-ES", { month: "short" }).toUpperCase().replace(".", "");
+    return `${shortMonth} ${year}`;
   };
 
   return (
     <div className="space-y-6">
+      {/* Section Header with Action Button */}
+      <div className="flex flex-row justify-between items-center gap-3 mb-6">
+        <h2 className="text-xl font-bold text-gray-900">Gestión de Pagos</h2>
+        <button
+          onClick={() => setShowPaymentModal(true)}
+          className="
+            flex items-center justify-center gap-2
+            w-10 h-10 sm:w-auto sm:h-auto
+            rounded-full sm:rounded-lg
+            p-0 sm:px-6 sm:py-3
+            bg-orange-500 text-white font-semibold 
+            shadow-lg hover:bg-orange-600 
+            active:bg-orange-700 transform hover:-translate-y-0.5 active:translate-y-0 
+            transition-all duration-300 touch-manipulation
+          "
+          aria-label="Registrar Pago"
+        >
+          <span className="text-2xl sm:text-xl leading-none mb-1 sm:mb-0">+</span>
+          <span className="hidden sm:block">Registrar Pago</span>
+        </button>
+      </div>
+
       {/* Payment Status Banner */}
       {membershipPlan && paymentStatus && (
         <div
@@ -122,12 +146,7 @@ export function PaymentSection({
                 </p>
               )}
             </div>
-            <button
-              onClick={() => setShowPaymentModal(true)}
-              className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
-            >
-              + Registrar Pago
-            </button>
+            {/* Button moved to header */}
           </div>
 
           {/* Overdue Months */}
@@ -136,8 +155,11 @@ export function PaymentSection({
               <p className="font-semibold text-red-900 mb-2">Meses adeudados:</p>
               <div className="flex flex-wrap gap-2">
                 {paymentStatus.overdueMonths.map(month => (
-                  <span key={month} className="px-3 py-1 bg-red-100 text-red-800 rounded-full font-medium text-sm">
-                    {formatMonthName(month)}
+                  <span
+                    key={month}
+                    className="px-2 py-1 bg-red-100 text-red-800 rounded-md font-bold text-xs border border-red-200"
+                  >
+                    {formatShortMonth(month)}
                   </span>
                 ))}
               </div>
@@ -170,15 +192,15 @@ export function PaymentSection({
 
         {membershipPlan ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
               <p className="text-sm text-gray-600 mb-1">Cuota Mensual</p>
               <p className="text-2xl font-bold text-gray-900">{formatCurrency(membershipPlan.monthlyFee)}</p>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
               <p className="text-sm text-gray-600 mb-1">Frecuencia</p>
               <p className="text-2xl font-bold text-gray-900">{membershipPlan.weeklyFrequency}x por semana</p>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
               <p className="text-sm text-gray-600 mb-1">Inicio</p>
               <p className="text-2xl font-bold text-gray-900">
                 {new Date(membershipPlan.startDate).toLocaleDateString("es-ES")}
@@ -192,25 +214,39 @@ export function PaymentSection({
 
       {/* Payment History */}
       {paymentStatus && paymentStatus.payments.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Historial de Pagos</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+        <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Historial de Pagos</h3>
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Mes</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Monto</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Fecha de Pago</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Estado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Mes
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Monto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha de Pago
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {paymentStatus.payments.map(payment => (
                   <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4">{formatMonthName(payment.month)}</td>
-                    <td className="py-3 px-4 font-semibold">{formatCurrency(payment.amount)}</td>
-                    <td className="py-3 px-4">{new Date(payment.paymentDate).toLocaleDateString("es-ES")}</td>
-                    <td className="py-3 px-4">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatShortMonth(payment.month)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                      {formatCurrency(payment.amount)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(payment.paymentDate).toLocaleDateString("es-ES")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${
                           payment.status === "paid"

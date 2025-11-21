@@ -8,17 +8,6 @@ interface MemberListPageProps {
 }
 
 export function MemberListPage({ members, loading }: MemberListPageProps) {
-  const getAge = (dateOfBirth: Date) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -87,7 +76,7 @@ export function MemberListPage({ members, loading }: MemberListPageProps) {
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
-                      {getAge(member.dateOfBirth)} años
+                      {member.age} años
                     </span>
                     <span className="capitalize">
                       {member.gender === "male" ? "M" : member.gender === "female" ? "F" : "O"}

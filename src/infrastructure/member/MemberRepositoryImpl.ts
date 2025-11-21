@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "@core/container/DIContainer";
 import { Result } from "@core/types/Result";
-import type { Member, CreateMemberDTO, UpdateMemberDTO } from "@domain/member/entities/Member";
+import { Member, type CreateMemberDTO, type UpdateMemberDTO } from "@domain/member/entities/Member";
 import type { MemberRepository } from "@domain/member/MemberRepository";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -126,16 +126,16 @@ export class MemberRepositoryImpl implements MemberRepository {
     created_at: string;
     updated_at: string;
   }): Member {
-    return {
-      id: data.id,
-      userId: data.user_id,
-      name: data.name,
-      email: data.email,
-      dateOfBirth: new Date(data.date_of_birth),
-      gender: data.gender as "male" | "female" | "other",
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    };
+    return new Member(
+      data.id,
+      data.user_id,
+      data.name,
+      data.email,
+      new Date(data.date_of_birth),
+      data.gender as "male" | "female" | "other",
+      new Date(data.created_at),
+      new Date(data.updated_at)
+    );
   }
 
   private formatDate(date: Date): string {
