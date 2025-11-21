@@ -4,7 +4,11 @@ import type { Member, CreateMemberDTO, UpdateMemberDTO } from "./entities/Member
 export interface MemberRepository {
   create(data: CreateMemberDTO): Promise<Result<Member>>;
   findById(id: string): Promise<Result<Member | null>>;
-  findAll(): Promise<Result<Member[]>>;
+  findAll(options?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<Result<{ members: Member[]; total: number }>>;
   update(id: string, data: UpdateMemberDTO): Promise<Result<Member>>;
   delete(id: string): Promise<Result<void>>;
 }

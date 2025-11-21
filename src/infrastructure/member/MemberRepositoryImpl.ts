@@ -60,18 +60,37 @@ export class MemberRepositoryImpl implements MemberRepository {
     }
   }
 
-  async findAll(): Promise<Result<Member[]>> {
+  async findAll(options?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<Result<{ members: Member[]; total: number }>> {
     try {
-      const { data: members, error } = await this.supabase
+      let query = this.supabase
         .from("members")
-        .select("*")
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: false });
+
+      if (options?.search) {
+        query = query.ilike("name", `%${options.search}%`);
+      }
+
+      if (options?.page && options?.limit) {
+        const from = (options.page - 1) * options.limit;
+        const to = from + options.limit - 1;
+        query = query.range(from, to);
+      }
+
+      const { data: members, error, count } = await query;
 
       if (error) {
         return Result.error(`Error fetching members: ${error.message}`);
       }
 
-      return Result.success(members.map(m => this.mapToMember(m)));
+      return Result.success({
+        members: members.map(m => this.mapToMember(m)),
+        total: count || 0,
+      });
     } catch (error) {
       return Result.error(error instanceof Error ? error.message : "Unknown error fetching members");
     }

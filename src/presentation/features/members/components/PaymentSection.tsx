@@ -131,7 +131,7 @@ export function PaymentSection({
       {/* Payment Status Banner */}
       {membershipPlan && paymentStatus && (
         <div
-          className={`rounded-2xl shadow-xl border p-6 ${
+          className={`rounded-2xl shadow-sm border p-6 ${
             paymentStatus.isOverdue ? "bg-red-50 border-red-300" : "bg-green-50 border-green-300"
           }`}
         >
@@ -169,7 +169,7 @@ export function PaymentSection({
       )}
 
       {/* Membership Plan Card */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-gray-900">Plan de Membresía</h3>
           <button
@@ -214,7 +214,7 @@ export function PaymentSection({
 
       {/* Payment History */}
       {paymentStatus && paymentStatus.payments.length > 0 && (
-        <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6">
+        <div className="mb-8 bg-white rounded-2xl shadow-sm  border-gray-200 p-4 sm:p-6">
           <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Historial de Pagos</h3>
           <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
             <table className="min-w-full divide-y divide-gray-200">

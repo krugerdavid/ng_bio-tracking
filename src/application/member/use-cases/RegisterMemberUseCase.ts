@@ -15,8 +15,8 @@ export class RegisterMemberUseCase {
       return Result.error(existingMembersResult.getError());
     }
 
-    const existingMembers = existingMembersResult.getValue();
-    const emailExists = existingMembers.some(m => m.email === data.email);
+    const { members } = existingMembersResult.getValue();
+    const emailExists = members.some(m => m.email === data.email);
 
     if (emailExists) {
       return Result.error("Email already registered");

@@ -1,14 +1,30 @@
-import { Link } from "react-router-dom";
-import type { Member } from "@domain/member/entities/Member";
+import { Link, useNavigate } from "react-router-dom";
+import type { MemberListItemDTO } from "@application/member/dtos/MemberListItemDTO";
 
 interface MemberListPageProps {
-  members: Member[];
+  members: MemberListItemDTO[];
   loading: boolean;
   error?: string;
+  page: number;
+  totalPages: number;
+  totalMembers: number;
+  onSearch: (value: string) => void;
+  onPageChange: (page: number) => void;
 }
 
-export function MemberListPage({ members, loading }: MemberListPageProps) {
-  if (loading) {
+export function MemberListPage({
+  members,
+  loading,
+  error,
+  page,
+  totalPages,
+  totalMembers,
+  onSearch,
+  onPageChange,
+}: MemberListPageProps) {
+  const navigate = useNavigate();
+
+  if (loading && members.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
@@ -17,18 +33,73 @@ export function MemberListPage({ members, loading }: MemberListPageProps) {
   }
 
   return (
-    <div>
-      <div className="mb-8 flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-gray-900">Miembros Registrados</h2>
+    <div className="space-y-6">
+      <div className="flex flex-row justify-between items-center gap-4">
+        <div className="flex flex-col items-start gap-2">
+          <h2 className="text-2xl font-bold text-gray-900 ">Miembros Registrados</h2>
+          <span className="text-sm font-medium text-gray-600 bg-gray-200 px-3 py-1 rounded-full">
+            {totalMembers} total
+          </span>
+        </div>
         <Link
           to="/register-member"
-          className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
+          className="
+                flex items-center justify-center gap-2
+                w-12 h-12 sm:w-auto sm:h-auto
+                rounded-full sm:rounded-lg
+                p-0 sm:px-6 sm:py-3
+                bg-orange-500 text-white font-semibold 
+                shadow-lg hover:bg-orange-600 
+                active:bg-orange-700 transform hover:-translate-y-0.5 active:translate-y-0 
+                transition-all duration-300 touch-manipulation
+              "
+          aria-label="Registrar Pago"
         >
-          + Nuevo Miembro
+          <span className="text-2xl sm:text-xl leading-none mb-1 sm:mb-0">+</span>
+          <span className="hidden sm:block">Miembro</span>
         </Link>
       </div>
 
-      {members.length === 0 ? (
+      {/* Search Bar */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+        <input
+          type="text"
+          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition duration-150 ease-in-out"
+          placeholder="Buscar por nombre..."
+          onChange={e => onSearch(e.target.value)}
+        />
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {members.length === 0 && !loading ? (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-12 text-center">
           <div className="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
             <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,52 +111,207 @@ export function MemberListPage({ members, loading }: MemberListPageProps) {
               />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No hay miembros registrados</h3>
-          <p className="text-gray-500 mb-6">Comienza registrando tu primer miembro</p>
-          <Link
-            to="/register-member"
-            className="inline-block px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
-          >
-            Registrar Primer Miembro
-          </Link>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">No se encontraron miembros</h3>
+          <p className="text-gray-500 mb-6">Intenta con otra búsqueda o registra un nuevo miembro</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {members.map(member => (
-            <Link
-              key={member.id}
-              to={`/member/${member.id}`}
-              className="group bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:border-orange-300 transform hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className="flex items-start space-x-4">
-                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  {member.name.charAt(0).toUpperCase()}
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Nombre
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Frecuencia
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Edad
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Estado
+                  </th>
+                  <th scope="col" className="relative px-6 py-3">
+                    <span className="sr-only">Ver detalle</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {members.map(member => (
+                  <tr
+                    key={member.id}
+                    onClick={() => navigate(`/member/${member.id}`)}
+                    className={`hover:bg-gray-50 transition-colors duration-150 cursor-pointer ${member.status === "moroso" ? "bg-red-50" : ""}`}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg">
+                            {member.name.charAt(0).toUpperCase()}
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                          <div className="text-sm text-gray-500">{member.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{member.frequency}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{member.age} años</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          member.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : member.status === "moroso"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {member.status === "active" ? "Al día" : member.status === "moroso" ? "Moroso" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <span className="text-orange-600 hover:text-orange-900 font-semibold">Ver detalle</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                  onClick={() => onPageChange(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 ${
+                    page === 1 ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+                  disabled={page === totalPages}
+                  className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 ${
+                    page === totalPages ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  Siguiente
+                </button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Página <span className="font-medium">{page}</span> de{" "}
+                    <span className="font-medium">{totalPages}</span>
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-bold text-gray-800 mb-1 truncate group-hover:text-orange-600 transition-colors duration-300">
-                    {member.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-2 truncate">{member.email}</p>
-                  <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <span className="flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => onPageChange(Math.max(1, page - 1))}
+                      disabled={page === 1}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+                        page === 1 ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <span className="sr-only">Anterior</span>
+                      <svg
+                        className="h-5 w-5"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
                         <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          fillRule="evenodd"
+                          d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                          clipRule="evenodd"
                         />
                       </svg>
-                      {member.age} años
-                    </span>
-                    <span className="capitalize">
-                      {member.gender === "male" ? "M" : member.gender === "female" ? "F" : "O"}
-                    </span>
-                  </div>
+                    </button>
+                    {/* Page Numbers */}
+                    {[...Array(totalPages)].map((_, i) => {
+                      const pageNum = i + 1;
+                      // Show current, first, last, and neighbors
+                      if (pageNum === 1 || pageNum === totalPages || (pageNum >= page - 1 && pageNum <= page + 1)) {
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => onPageChange(pageNum)}
+                            aria-current={page === pageNum ? "page" : undefined}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              page === pageNum
+                                ? "z-10 bg-orange-50 border-orange-500 text-orange-600"
+                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      } else if (
+                        (pageNum === page - 2 && page > 3) ||
+                        (pageNum === page + 2 && page < totalPages - 2)
+                      ) {
+                        return (
+                          <span
+                            key={pageNum}
+                            className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                    <button
+                      onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+                      disabled={page === totalPages}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+                        page === totalPages ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <span className="sr-only">Siguiente</span>
+                      <svg
+                        className="h-5 w-5"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </nav>
                 </div>
               </div>
-            </Link>
-          ))}
+            </div>
+          )}
         </div>
       )}
     </div>
