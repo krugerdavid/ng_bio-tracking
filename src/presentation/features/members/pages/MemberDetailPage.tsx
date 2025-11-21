@@ -421,6 +421,7 @@ export function MemberDetailPage({
       {activeTab === "pagos" && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestión de Pagos</h2>
+
           <PaymentSection
             memberId={details.member.id}
             membershipPlan={membershipPlan}
@@ -433,8 +434,31 @@ export function MemberDetailPage({
       )}
 
       {/* Bioimpedance Registration Modal */}
-      <Modal isOpen={showBioModal} onClose={() => setShowBioModal(false)} title="Registrar Bioimpedancia" size="lg">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Modal
+        isOpen={showBioModal}
+        onClose={() => setShowBioModal(false)}
+        title="Registrar Bioimpedancia"
+        size="lg"
+        footer={
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              form="bioimpedance-form"
+              className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
+            >
+              Guardar Registro
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowBioModal(false)}
+              className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
+            >
+              Cancelar
+            </button>
+          </div>
+        }
+      >
+        <form id="bioimpedance-form" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha</label>
             <input
@@ -543,14 +567,6 @@ export function MemberDetailPage({
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
               placeholder="Observaciones adicionales..."
             />
-          </div>
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              className="w-full px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
-            >
-              Guardar Registro
-            </button>
           </div>
         </form>
       </Modal>

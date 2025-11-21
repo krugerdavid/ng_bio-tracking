@@ -3,6 +3,7 @@ import type { CreatePaymentDTO } from "@domain/payment/entities/Payment";
 import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaymentStatusUseCase";
 import { Modal } from "../../../shared/components/Modal";
+import { CurrencyInput } from "../../../shared/components/CurrencyInput";
 
 interface PaymentSectionProps {
   memberId: string;
@@ -231,8 +232,31 @@ export function PaymentSection({
       )}
 
       {/* Payment Registration Modal */}
-      <Modal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} title="Registrar Pago" size="md">
-        <form onSubmit={handleRecordPayment} className="space-y-4">
+      <Modal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        title="Registrar Pago"
+        size="md"
+        footer={
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              form="payment-form"
+              className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600"
+            >
+              Confirmar Pago
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPaymentModal(false)}
+              className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
+            >
+              Cancelar
+            </button>
+          </div>
+        }
+      >
+        <form id="payment-form" onSubmit={handleRecordPayment} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Mes</label>
@@ -245,14 +269,14 @@ export function PaymentSection({
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Monto ($)</label>
-              <input
-                type="number"
+              <CurrencyInput
+                label="Monto (Gs.)"
+                id="amount"
                 required
-                step="0.01"
                 value={paymentFormData.amount}
-                onChange={e => setPaymentFormData({ ...paymentFormData, amount: e.target.value })}
+                onChange={value => setPaymentFormData({ ...paymentFormData, amount: value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                placeholder="0"
               />
             </div>
           </div>
@@ -278,22 +302,6 @@ export function PaymentSection({
               placeholder="Observaciones..."
             />
           </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600"
-            >
-              Confirmar Pago
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPaymentModal(false)}
-              className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
-          </div>
         </form>
       </Modal>
 
@@ -303,18 +311,34 @@ export function PaymentSection({
         onClose={() => setShowPlanModal(false)}
         title={membershipPlan ? "Editar Plan de Membresía" : "Configurar Plan de Membresía"}
         size="md"
+        footer={
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              form="plan-form"
+              className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600"
+            >
+              Guardar Plan
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPlanModal(false)}
+              className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
+            >
+              Cancelar
+            </button>
+          </div>
+        }
       >
-        <form onSubmit={handleUpdatePlan} className="space-y-4">
+        <form id="plan-form" onSubmit={handleUpdatePlan} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Cuota Mensual ($)</label>
-            <input
-              type="number"
+            <CurrencyInput
+              label="Cuota Mensual (Gs.)"
               required
-              step="0.01"
               value={planFormData.monthlyFee}
-              onChange={e => setPlanFormData({ ...planFormData, monthlyFee: e.target.value })}
+              onChange={value => setPlanFormData({ ...planFormData, monthlyFee: value })}
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Ej: 5000"
+              placeholder="Ej: 150.000"
             />
           </div>
 
@@ -348,22 +372,6 @@ export function PaymentSection({
               onChange={e => setPlanFormData({ ...planFormData, startDate: e.target.value })}
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600"
-            >
-              Guardar Plan
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPlanModal(false)}
-              className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
           </div>
         </form>
       </Modal>
