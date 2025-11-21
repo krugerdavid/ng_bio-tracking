@@ -10,6 +10,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export class AuthRepositoryImpl implements AuthRepository {
   constructor(@inject(TYPES.SupabaseClient) private supabase: SupabaseClient) {}
 
+  private readonly USER_PROFILE_CACHE_KEY = "bio-tracker-user-role";
+
   async login(email: string, password: string): Promise<Result<User>> {
     try {
       const { data, error } = await this.supabase.auth.signInWithPassword({
@@ -39,6 +41,9 @@ export class AuthRepositoryImpl implements AuthRepository {
       if (error) {
         return Result.error(`Logout failed: ${error.message}`);
       }
+
+      // Clear cached profile
+      localStorage.removeItem(this.USER_PROFILE_CACHE_KEY);
 
       return Result.success(undefined);
     } catch (error) {
@@ -85,6 +90,8 @@ export class AuthRepositoryImpl implements AuthRepository {
           callback(null);
         }
       } else {
+        // Clear cache on session end/logout
+        localStorage.removeItem(this.USER_PROFILE_CACHE_KEY);
         callback(null);
       }
     });
@@ -119,6 +126,27 @@ export class AuthRepositoryImpl implements AuthRepository {
     let role: Role = Role.USER;
 
     try {
+      // Check cache first
+      const cachedProfile = localStorage.getItem(this.USER_PROFILE_CACHE_KEY);
+      if (cachedProfile) {
+        try {
+          const parsed = JSON.parse(cachedProfile);
+          if (parsed.userId === authUser.id && parsed.role) {
+            // Use cached role
+            role = parsed.role as Role;
+            return {
+              id: authUser.id,
+              email: authUser.email!,
+              role,
+              createdAt: new Date(authUser.created_at),
+            };
+          }
+        } catch {
+          console.warn("Invalid cached profile, fetching fresh one");
+          localStorage.removeItem(this.USER_PROFILE_CACHE_KEY);
+        }
+      }
+
       // Add timeout for profile fetch
       const profilePromise = this.supabase.from("user_profiles").select("role").eq("user_id", authUser.id).single();
 
@@ -132,6 +160,14 @@ export class AuthRepositoryImpl implements AuthRepository {
 
       if (profile?.role) {
         role = profile.role as Role;
+        // Cache the result
+        localStorage.setItem(
+          this.USER_PROFILE_CACHE_KEY,
+          JSON.stringify({
+            userId: authUser.id,
+            role: role,
+          })
+        );
       }
     } catch (error) {
       // Silently fail and use default role

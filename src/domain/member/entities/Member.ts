@@ -1,13 +1,13 @@
 export class Member {
   constructor(
     public id: string,
-    public userId: string,
     public name: string,
     public email: string,
     public dateOfBirth: Date,
     public gender: "male" | "female" | "other",
     public createdAt: Date,
-    public updatedAt: Date
+    public updatedAt: Date,
+    public userId?: string
   ) {}
 
   get age(): number {
@@ -22,5 +22,5 @@ export class Member {
   }
 }
 
-export type CreateMemberDTO = Omit<Member, "id" | "createdAt" | "updatedAt" | "age">;
-export type UpdateMemberDTO = Partial<Omit<CreateMemberDTO, "userId">>;
+export type CreateMemberDTO = Omit<Member, "id" | "createdAt" | "updatedAt" | "age" | "userId">;
+export type UpdateMemberDTO = Partial<CreateMemberDTO>;

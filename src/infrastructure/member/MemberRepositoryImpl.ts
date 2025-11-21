@@ -11,7 +11,7 @@ export class MemberRepositoryImpl implements MemberRepository {
 
   async create(data: CreateMemberDTO): Promise<Result<Member>> {
     try {
-      // Get current authenticated user
+      // Get current authenticated user (optional check, just to ensure someone is logged in)
       const {
         data: { user },
         error: userError,
@@ -24,7 +24,7 @@ export class MemberRepositoryImpl implements MemberRepository {
       const { data: member, error } = await this.supabase
         .from("members")
         .insert({
-          user_id: user.id,
+          // user_id is no longer required/linked
           name: data.name,
           email: data.email,
           date_of_birth: this.formatDate(data.dateOfBirth),
@@ -137,7 +137,7 @@ export class MemberRepositoryImpl implements MemberRepository {
 
   private mapToMember(data: {
     id: string;
-    user_id: string;
+    user_id?: string | null;
     name: string;
     email: string;
     date_of_birth: string;
@@ -147,13 +147,13 @@ export class MemberRepositoryImpl implements MemberRepository {
   }): Member {
     return new Member(
       data.id,
-      data.user_id,
       data.name,
       data.email,
       new Date(data.date_of_birth),
       data.gender as "male" | "female" | "other",
       new Date(data.created_at),
-      new Date(data.updated_at)
+      new Date(data.updated_at),
+      data.user_id || undefined
     );
   }
 
