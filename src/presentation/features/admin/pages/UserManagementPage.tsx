@@ -1,6 +1,7 @@
 import { type FormEvent } from "react";
 import type { UserProfile } from "@domain/user/entities/UserProfile";
 import { Role, isAdmin } from "@domain/shared/value-objects/Role";
+import { PageLoader } from "@/presentation/shared/components/PageLoader";
 
 interface UserManagementPageProps {
   users: UserProfile[];
@@ -32,11 +33,7 @@ export function UserManagementPage({
   onFormDataChange,
 }: UserManagementPageProps) {
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

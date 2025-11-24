@@ -9,6 +9,8 @@ import { PaymentSection } from "../components/PaymentSection";
 import { UpdateMemberModal } from "../components/UpdateMemberModal";
 import { Modal } from "../../../shared/components/Modal";
 import { Tabs } from "../../../shared/components/Tabs";
+import { PageLoader } from "../../../shared/components/PageLoader";
+import { formatWithThousandsSeparator } from "../../../shared/utils/formatters";
 
 interface MemberDetailPageProps {
   details: MemberDetails | null;
@@ -145,11 +147,7 @@ export function MemberDetailPage({
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!details) {
@@ -206,7 +204,7 @@ export function MemberDetailPage({
               </button>
             </div>
             <p className="text-sm text-gray-600 mb-2 truncate">
-              {member.documentNumber} &middot; {member.email}
+              {formatWithThousandsSeparator(member.documentNumber)} &middot; {member.email}
             </p>
             <div className="flex items-center space-x-4 text-xs text-gray-500">
               <span className="flex items-center">

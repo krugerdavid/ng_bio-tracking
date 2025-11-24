@@ -6,6 +6,7 @@ import type { PaymentRepository } from "@domain/payment/PaymentRepository";
 import { PaymentDomainService } from "@domain/payment/PaymentDomainService";
 import type { MemberListItemDTO } from "../dtos/MemberListItemDTO";
 import { TYPES } from "@core/container/DIContainer";
+import { formatWithThousandsSeparator } from "@presentation/shared/utils/formatters";
 
 @injectable()
 export class ListMembersUseCase {
@@ -70,6 +71,7 @@ export class ListMembersUseCase {
       return {
         id: member.id,
         name: member.name,
+        documentNumber: formatWithThousandsSeparator(member.documentNumber),
         email: member.email || "", // Handle undefined email
         age: member.age,
         frequency,

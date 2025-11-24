@@ -53,15 +53,11 @@ export class PaymentRepositoryImpl implements PaymentRepository {
 
   async findByMemberId(memberId: string): Promise<Result<Payment[]>> {
     try {
-      console.log("Fetching payments for member:", memberId);
       const { data: payments, error } = await this.supabase
         .from("payments")
         .select("*")
         .eq("member_id", memberId)
         .order("month", { ascending: false });
-
-      console.log("Payments fetch result:", { payments, error });
-
       if (error) {
         return Result.error(`Error fetching payments: ${error.message}`);
       }

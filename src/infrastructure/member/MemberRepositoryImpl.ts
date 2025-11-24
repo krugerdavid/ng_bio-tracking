@@ -73,7 +73,7 @@ export class MemberRepositoryImpl implements MemberRepository {
         .order("created_at", { ascending: false });
 
       if (options?.search) {
-        query = query.ilike("name", `%${options.search}%`);
+        query = query.or(`name.ilike.%${options.search}%,document_number.ilike.%${options.search}%`);
       }
 
       if (options?.page && options?.limit) {

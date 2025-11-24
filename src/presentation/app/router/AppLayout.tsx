@@ -1,7 +1,8 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { useAuth } from "@presentation/shared/hooks/useAuth";
 import { isAdmin } from "@domain/shared/value-objects/Role";
+import { PageLoader } from "@presentation/shared/components/PageLoader";
 
 export default function AppLayout() {
   const location = useLocation();
@@ -10,12 +11,27 @@ export default function AppLayout() {
   const user = authState.user;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [, startTransition] = useTransition();
+  const [isNavigating, setIsNavigating] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     const result = await logout();
     if (result.isSuccess()) {
       navigate("/login");
+    }
+  };
+
+  // Handle navigation clicks to show loader immediately
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    // Only intercept if not already on the target path
+    if (location.pathname !== path) {
+      e.preventDefault();
+      setIsNavigating(true);
+      // Use startTransition for smoother navigation
+      startTransition(() => {
+        navigate(path);
+      });
     }
   };
 
@@ -31,11 +47,13 @@ export default function AppLayout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close mobile menu when route changes
+  // Close mobile menu when route changes and reset navigation state
   useEffect(() => {
     if (isMobileMenuOpen) {
       setIsMobileMenuOpen(false);
     }
+    // Reset navigation state when route changes
+    setIsNavigating(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
@@ -52,7 +70,7 @@ export default function AppLayout() {
   }, [isMobileMenuOpen]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -66,6 +84,7 @@ export default function AppLayout() {
               <div className="flex space-x-2">
                 <Link
                   to="/"
+                  onClick={e => handleNavClick(e, "/")}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                     location.pathname === "/"
                       ? "bg-orange-500 text-white shadow-md"
@@ -76,6 +95,7 @@ export default function AppLayout() {
                 </Link>
                 <Link
                   to="/members"
+                  onClick={e => handleNavClick(e, "/members")}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                     location.pathname === "/members" || location.pathname.startsWith("/member/")
                       ? "bg-orange-500 text-white shadow-md"
@@ -87,6 +107,7 @@ export default function AppLayout() {
                 {user && isAdmin(user.role) && (
                   <Link
                     to="/users"
+                    onClick={e => handleNavClick(e, "/users")}
                     className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                       location.pathname === "/users"
                         ? "bg-orange-500 text-white shadow-md"
@@ -190,6 +211,7 @@ export default function AppLayout() {
         <nav className="p-4 space-y-2">
           <Link
             to="/"
+            onClick={e => handleNavClick(e, "/")}
             className={`block px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
               location.pathname === "/"
                 ? "bg-orange-500 text-white shadow-md"
@@ -200,6 +222,7 @@ export default function AppLayout() {
           </Link>
           <Link
             to="/members"
+            onClick={e => handleNavClick(e, "/members")}
             className={`block px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
               location.pathname === "/members" || location.pathname.startsWith("/member/")
                 ? "bg-orange-500 text-white shadow-md"
@@ -211,6 +234,7 @@ export default function AppLayout() {
           {user && isAdmin(user.role) && (
             <Link
               to="/users"
+              onClick={e => handleNavClick(e, "/users")}
               className={`block px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
                 location.pathname === "/users"
                   ? "bg-orange-500 text-white shadow-md"
@@ -240,7 +264,17 @@ export default function AppLayout() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Navigation Loading Overlay */}
+      {isNavigating && (
+        <div className="fixed inset-0 z-[60] bg-gray-100 flex flex-col">
+          <div className="h-16" /> {/* Spacer for navbar height */}
+          <div className="flex-grow flex items-center justify-center">
+            <PageLoader />
+          </div>
+        </div>
+      )}
+
+      <main className="flex flex-col flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <Outlet />
       </main>
     </div>
