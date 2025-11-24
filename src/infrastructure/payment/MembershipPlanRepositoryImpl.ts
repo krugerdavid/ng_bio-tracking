@@ -60,18 +60,36 @@ export class MembershipPlanRepositoryImpl implements MembershipPlanRepository {
         .from("membership_plans")
         .select("*")
         .eq("member_id", memberId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code === "PGRST116") {
-          return Result.success(null);
-        }
         return Result.error(`Error finding membership plan: ${error.message}`);
       }
 
       return Result.success(plan ? this.mapToMembershipPlan(plan) : null);
     } catch (error) {
       return Result.error(error instanceof Error ? error.message : "Unknown error finding membership plan");
+    }
+  }
+
+  async findAllByMemberIds(memberIds: string[]): Promise<Result<MembershipPlan[]>> {
+    try {
+      if (memberIds.length === 0) {
+        return Result.success([]);
+      }
+
+      const { data: plans, error } = await this.supabase
+        .from("membership_plans")
+        .select("*")
+        .in("member_id", memberIds);
+
+      if (error) {
+        return Result.error(`Error finding membership plans: ${error.message}`);
+      }
+
+      return Result.success(plans.map(p => this.mapToMembershipPlan(p)));
+    } catch (error) {
+      return Result.error(error instanceof Error ? error.message : "Unknown error finding membership plans");
     }
   }
 

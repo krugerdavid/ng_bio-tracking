@@ -26,9 +26,10 @@ export class MemberRepositoryImpl implements MemberRepository {
         .insert({
           // user_id is no longer required/linked
           name: data.name,
-          email: data.email,
-          date_of_birth: this.formatDate(data.dateOfBirth),
-          gender: data.gender,
+          document_number: data.documentNumber,
+          email: data.email || null,
+          date_of_birth: data.dateOfBirth ? this.formatDate(data.dateOfBirth) : null,
+          gender: data.gender || null,
         })
         .select()
         .single();
@@ -100,8 +101,10 @@ export class MemberRepositoryImpl implements MemberRepository {
     try {
       const updateData: Record<string, unknown> = {};
       if (data.name !== undefined) updateData.name = data.name;
+      if (data.documentNumber !== undefined) updateData.document_number = data.documentNumber;
       if (data.email !== undefined) updateData.email = data.email;
-      if (data.dateOfBirth !== undefined) updateData.date_of_birth = this.formatDate(data.dateOfBirth);
+      if (data.dateOfBirth !== undefined)
+        updateData.date_of_birth = data.dateOfBirth ? this.formatDate(data.dateOfBirth) : null;
       if (data.gender !== undefined) updateData.gender = data.gender;
 
       const { data: member, error } = await this.supabase
@@ -139,18 +142,20 @@ export class MemberRepositoryImpl implements MemberRepository {
     id: string;
     user_id?: string | null;
     name: string;
-    email: string;
-    date_of_birth: string;
-    gender: string;
+    document_number: string;
+    email: string | null;
+    date_of_birth: string | null;
+    gender: string | null;
     created_at: string;
     updated_at: string;
   }): Member {
     return new Member(
       data.id,
       data.name,
-      data.email,
-      new Date(data.date_of_birth),
-      data.gender as "male" | "female" | "other",
+      data.document_number,
+      data.email || undefined,
+      data.date_of_birth ? new Date(data.date_of_birth) : undefined,
+      (data.gender as "male" | "female" | "other") || undefined,
       new Date(data.created_at),
       new Date(data.updated_at),
       data.user_id || undefined

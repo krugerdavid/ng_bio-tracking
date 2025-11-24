@@ -57,6 +57,7 @@ export default function MemberListPageController() {
       totalMembers={total}
       onSearch={handleSearch}
       onPageChange={handlePageChange}
+      onRefresh={loadMembers}
     />
   );
 }

@@ -19,7 +19,11 @@ export class GetMemberDetailsUseCase {
   ) {}
 
   async execute(memberId: string): Promise<Result<MemberDetails>> {
-    const memberResult = await this.memberRepository.findById(memberId);
+    const [memberResult, bioimpedancesResult] = await Promise.all([
+      this.memberRepository.findById(memberId),
+      this.bioimpedanceRepository.findByMemberId(memberId),
+    ]);
+
     if (memberResult.isError()) {
       return Result.error(memberResult.getError());
     }
@@ -29,7 +33,6 @@ export class GetMemberDetailsUseCase {
       return Result.error(`Member with id ${memberId} not found`);
     }
 
-    const bioimpedancesResult = await this.bioimpedanceRepository.findByMemberId(memberId);
     if (bioimpedancesResult.isError()) {
       return Result.error(bioimpedancesResult.getError());
     }

@@ -27,43 +27,56 @@ export class ListMembersUseCase {
     }
 
     const { members, total } = membersResult.getValue();
+    const memberIds = members.map(m => m.id);
 
-    const items = await Promise.all(
-      members.map(async member => {
-        // Fetch plan and payments in parallel
-        const [planResult, paymentsResult] = await Promise.all([
-          this.membershipPlanRepository.findByMemberId(member.id),
-          this.paymentRepository.findByMemberId(member.id),
-        ]);
+    // Fetch all plans and payments in parallel
+    const [plansResult, paymentsResult] = await Promise.all([
+      this.membershipPlanRepository.findAllByMemberIds(memberIds),
+      this.paymentRepository.findAllByMemberIds(memberIds),
+    ]);
 
-        const plan = planResult.isSuccess() ? planResult.getValue() : null;
-        const payments = paymentsResult.isSuccess() ? paymentsResult.getValue() : [];
+    const allPlans = plansResult.isSuccess() ? plansResult.getValue() : [];
+    const allPayments = paymentsResult.isSuccess() ? paymentsResult.getValue() : [];
 
-        let status: "active" | "inactive" | "moroso" = "inactive";
-        let frequency = "N/A";
+    // Create maps for O(1) access
+    const plansMap = new Map(allPlans.map(p => [p.memberId, p]));
+    const paymentsMap = new Map<string, typeof allPayments>();
 
-        if (plan && plan.isActive) {
-          frequency = `${plan.weeklyFrequency}x/semana`;
+    allPayments.forEach(p => {
+      if (!paymentsMap.has(p.memberId)) {
+        paymentsMap.set(p.memberId, []);
+      }
+      paymentsMap.get(p.memberId)?.push(p);
+    });
 
-          const overdueMonths = PaymentDomainService.getOverdueMonths(plan, payments);
-          if (overdueMonths.length > 0) {
-            status = "moroso";
-          } else {
-            status = "active";
-          }
+    const items = members.map(member => {
+      const plan = plansMap.get(member.id);
+      const payments = paymentsMap.get(member.id) || [];
+
+      let status: "active" | "inactive" | "moroso" = "inactive";
+      let frequency = "N/A";
+
+      if (plan && plan.isActive) {
+        frequency = `${plan.weeklyFrequency}x/semana`;
+
+        const overdueMonths = PaymentDomainService.getOverdueMonths(plan, payments);
+        if (overdueMonths.length > 0) {
+          status = "moroso";
+        } else {
+          status = "active";
         }
+      }
 
-        return {
-          id: member.id,
-          name: member.name,
-          email: member.email,
-          age: member.age,
-          frequency,
-          status,
-          avatarUrl: undefined, // Could be added if we had it
-        };
-      })
-    );
+      return {
+        id: member.id,
+        name: member.name,
+        email: member.email || "", // Handle undefined email
+        age: member.age,
+        frequency,
+        status,
+        avatarUrl: undefined,
+      };
+    });
 
     return Result.success({ items, total });
   }

@@ -53,10 +53,35 @@ export class PaymentRepositoryImpl implements PaymentRepository {
 
   async findByMemberId(memberId: string): Promise<Result<Payment[]>> {
     try {
+      console.log("Fetching payments for member:", memberId);
       const { data: payments, error } = await this.supabase
         .from("payments")
         .select("*")
         .eq("member_id", memberId)
+        .order("month", { ascending: false });
+
+      console.log("Payments fetch result:", { payments, error });
+
+      if (error) {
+        return Result.error(`Error fetching payments: ${error.message}`);
+      }
+
+      return Result.success(payments.map(p => this.mapToPayment(p)));
+    } catch (error) {
+      return Result.error(error instanceof Error ? error.message : "Unknown error fetching payments");
+    }
+  }
+
+  async findAllByMemberIds(memberIds: string[]): Promise<Result<Payment[]>> {
+    try {
+      if (memberIds.length === 0) {
+        return Result.success([]);
+      }
+
+      const { data: payments, error } = await this.supabase
+        .from("payments")
+        .select("*")
+        .in("member_id", memberIds)
         .order("month", { ascending: false });
 
       if (error) {

@@ -6,6 +6,7 @@ import type { CreatePaymentDTO } from "@domain/payment/entities/Payment";
 import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaymentStatusUseCase";
 import { PaymentSection } from "../components/PaymentSection";
+import { UpdateMemberModal } from "../components/UpdateMemberModal";
 import { Modal } from "../../../shared/components/Modal";
 import { Tabs } from "../../../shared/components/Tabs";
 
@@ -24,6 +25,7 @@ interface MemberDetailPageProps {
     startDate: Date;
     isActive: boolean;
   }) => Promise<void>;
+  onUpdateMember: () => Promise<void>;
 }
 
 // Helper function to format dates correctly in local timezone
@@ -86,9 +88,11 @@ export function MemberDetailPage({
   paymentLoading,
   onRecordPayment,
   onUpdatePlan,
+  onUpdateMember,
 }: MemberDetailPageProps) {
   const [activeTab, setActiveTab] = useState("bioimpedancia");
   const [showBioModal, setShowBioModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     height: "",
@@ -184,8 +188,26 @@ export function MemberDetailPage({
       <div className="mb-8 bg-white rounded-2xl shadow-sm border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row justify-between gap-4 sm:items-center">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{member.name}</h1>
-            <p className="text-sm text-gray-600 mb-2 truncate">{member.email}</p>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">{member.name}</h1>
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-full transition-all duration-200"
+                title="Editar información"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-2 truncate">
+              {member.documentNumber} &middot; {member.email}
+            </p>
             <div className="flex items-center space-x-4 text-xs text-gray-500">
               <span className="flex items-center">
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,6 +223,19 @@ export function MemberDetailPage({
               <span className="capitalize">
                 {member.gender === "male" ? "M" : member.gender === "female" ? "F" : "O"}
               </span>
+              {member.documentNumber && (
+                <span className="flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0c0 .884-.5 2-2 2h4c-1.5 0-2-1.116-2-2z"
+                    />
+                  </svg>
+                  {member.documentNumber}
+                </span>
+              )}
             </div>
           </div>
 
@@ -529,7 +564,7 @@ export function MemberDetailPage({
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">IMC</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">IMC/BMI</label>
             <input
               type="number"
               step="0.1"
@@ -606,6 +641,13 @@ export function MemberDetailPage({
           </div>
         </form>
       </Modal>
+
+      <UpdateMemberModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={onUpdateMember}
+        member={details.member}
+      />
     </div>
   );
 }

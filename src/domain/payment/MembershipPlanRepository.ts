@@ -5,6 +5,7 @@ export interface MembershipPlanRepository {
   create(data: CreateMembershipPlanDTO): Promise<Result<MembershipPlan>>;
   findById(id: string): Promise<Result<MembershipPlan | null>>;
   findByMemberId(memberId: string): Promise<Result<MembershipPlan | null>>;
+  findAllByMemberIds(memberIds: string[]): Promise<Result<MembershipPlan[]>>;
   update(id: string, data: UpdateMembershipPlanDTO): Promise<Result<MembershipPlan>>;
   delete(id: string): Promise<Result<void>>;
 }

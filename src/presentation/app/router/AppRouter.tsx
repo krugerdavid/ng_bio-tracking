@@ -7,7 +7,7 @@ import LoginPage from "../../features/auth/pages/LoginPage";
 // Lazy load page controllers to avoid loading all data on login
 const MemberListPageController = lazy(() => import("../../features/members/pages/MemberListPageController"));
 const MemberDetailPageController = lazy(() => import("../../features/members/pages/MemberDetailPageController"));
-const RegisterMemberPageController = lazy(() => import("../../features/members/pages/RegisterMemberPageController"));
+
 const UserManagementPageController = lazy(() => import("../../features/admin/pages/UserManagementPageController"));
 
 // Loading component for lazy loaded routes
@@ -42,14 +42,6 @@ export const routesConfig = [
             element: (
               <Suspense fallback={<PageLoader />}>
                 <MemberListPageController />
-              </Suspense>
-            ),
-          },
-          {
-            path: "/register-member",
-            element: (
-              <Suspense fallback={<PageLoader />}>
-                <RegisterMemberPageController />
               </Suspense>
             ),
           },

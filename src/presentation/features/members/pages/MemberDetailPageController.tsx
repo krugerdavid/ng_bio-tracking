@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { container } from "@core/container/bindings";
 import { TYPES } from "@core/container/DIContainer";
 import type { GetMemberDetailsUseCase, MemberDetails } from "@application/member/use-cases/GetMemberDetailsUseCase";
@@ -18,7 +18,6 @@ import { MemberDetailPage } from "./MemberDetailPage";
 
 export default function MemberDetailPageController() {
   const { memberId } = useParams<{ memberId: string }>();
-  const navigate = useNavigate();
   const [details, setDetails] = useState<MemberDetails | null>(null);
   const [membershipPlan, setMembershipPlan] = useState<MembershipPlan | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusResult | null>(null);
@@ -33,51 +32,42 @@ export default function MemberDetailPageController() {
   const getMembershipPlanUseCase = container.get<GetMembershipPlanUseCase>(TYPES.GetMembershipPlanUseCase);
   const updateMembershipPlanUseCase = container.get<UpdateMembershipPlanUseCase>(TYPES.UpdateMembershipPlanUseCase);
 
-  const loadPaymentData = async () => {
+  const fetchPaymentData = async () => {
     if (!memberId) return;
-
     setPaymentLoading(true);
+    const [planResult, statusResult] = await Promise.all([
+      getMembershipPlanUseCase.execute(memberId),
+      getPaymentStatusUseCase.execute(memberId),
+    ]);
 
-    // Load membership plan
-    const planResult = await getMembershipPlanUseCase.execute(memberId);
-    if (planResult.isSuccess()) {
-      setMembershipPlan(planResult.getValue());
-    }
-
-    // Load payment status
-    const statusResult = await getPaymentStatusUseCase.execute(memberId);
-    if (statusResult.isSuccess()) {
-      setPaymentStatus(statusResult.getValue());
-    }
-
+    if (planResult.isSuccess()) setMembershipPlan(planResult.getValue());
+    if (statusResult.isSuccess()) setPaymentStatus(statusResult.getValue());
     setPaymentLoading(false);
   };
 
-  const loadDetails = async () => {
+  const fetchDetails = async () => {
     if (!memberId) return;
-
     setLoading(true);
-    setError("");
     const result = await getMemberDetailsUseCase.execute(memberId);
-
     if (result.isError()) {
       setError(result.getError());
-      console.error("Error loading member details:", result.getError());
-      navigate("/");
     } else {
       setDetails(result.getValue());
     }
-
     setLoading(false);
+  };
 
-    // Load payment data
-    await loadPaymentData();
+  const loadAllData = async () => {
+    if (!memberId) return;
+    setLoading(true);
+    setPaymentLoading(true);
+    setError("");
+
+    await Promise.all([fetchDetails(), fetchPaymentData()]);
   };
 
   useEffect(() => {
-    if (memberId) {
-      loadDetails();
-    }
+    loadAllData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberId]);
 
@@ -90,7 +80,7 @@ export default function MemberDetailPageController() {
       console.error("Error recording bioimpedance:", result.getError());
       throw new Error(result.getError());
     } else {
-      await loadDetails();
+      await fetchDetails();
     }
   };
 
@@ -101,7 +91,7 @@ export default function MemberDetailPageController() {
       console.error("Error recording payment:", result.getError());
       alert("Error al registrar el pago: " + result.getError());
     } else {
-      await loadPaymentData();
+      await fetchPaymentData();
     }
   };
 
@@ -122,8 +112,12 @@ export default function MemberDetailPageController() {
       console.error("Error updating membership plan:", result.getError());
       alert("Error al actualizar el plan: " + result.getError());
     } else {
-      await loadPaymentData();
+      await fetchPaymentData();
     }
+  };
+
+  const handleUpdateMember = async () => {
+    await fetchDetails();
   };
 
   return (
@@ -137,6 +131,7 @@ export default function MemberDetailPageController() {
       paymentLoading={paymentLoading}
       onRecordPayment={handleRecordPayment}
       onUpdatePlan={handleUpdatePlan}
+      onUpdateMember={handleUpdateMember}
     />
   );
 }

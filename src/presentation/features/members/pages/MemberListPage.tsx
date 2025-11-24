@@ -1,5 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { MemberListItemDTO } from "@application/member/dtos/MemberListItemDTO";
+import { RegisterMemberModal } from "../components/RegisterMemberModal";
 
 interface MemberListPageProps {
   members: MemberListItemDTO[];
@@ -10,6 +12,7 @@ interface MemberListPageProps {
   totalMembers: number;
   onSearch: (value: string) => void;
   onPageChange: (page: number) => void;
+  onRefresh: () => void; // Added onRefresh prop to reload list after registration
 }
 
 export function MemberListPage({
@@ -21,8 +24,10 @@ export function MemberListPage({
   totalMembers,
   onSearch,
   onPageChange,
+  onRefresh,
 }: MemberListPageProps) {
   const navigate = useNavigate();
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   if (loading && members.length === 0) {
     return (
@@ -36,13 +41,13 @@ export function MemberListPage({
     <div className="space-y-6">
       <div className="flex flex-row justify-between items-center gap-4">
         <div className="flex flex-col items-start gap-2">
-          <h2 className="text-2xl font-bold text-gray-900 ">Miembros Registrados</h2>
+          <h2 className="text-2xl font-bold text-gray-900 ">Deportistas Registrados</h2>
           <span className="text-sm font-medium text-gray-600 bg-gray-200 px-3 py-1 rounded-full">
             {totalMembers} total
           </span>
         </div>
-        <Link
-          to="/register-member"
+        <button
+          onClick={() => setIsRegisterModalOpen(true)}
           className="
                 flex items-center justify-center gap-2
                 w-12 h-12 sm:w-auto sm:h-auto
@@ -53,11 +58,11 @@ export function MemberListPage({
                 active:bg-orange-700 transform hover:-translate-y-0.5 active:translate-y-0 
                 transition-all duration-300 touch-manipulation
               "
-          aria-label="Registrar Pago"
+          aria-label="Registrar Deportista"
         >
           <span className="text-2xl sm:text-xl leading-none mb-1 sm:mb-0">+</span>
-          <span className="hidden sm:block">Miembro</span>
-        </Link>
+          <span className="hidden sm:block">Deportista</span>
+        </button>
       </div>
 
       {/* Search Bar */}
@@ -111,8 +116,8 @@ export function MemberListPage({
               />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No se encontraron miembros</h3>
-          <p className="text-gray-500 mb-6">Intenta con otra búsqueda o registra un nuevo miembro</p>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">No se encontraron deportistas</h3>
+          <p className="text-gray-500 mb-6">Intenta con otra búsqueda o registra un nuevo deportista</p>
         </div>
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -314,6 +319,15 @@ export function MemberListPage({
           )}
         </div>
       )}
+
+      <RegisterMemberModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={() => {
+          setIsRegisterModalOpen(false);
+          onRefresh();
+        }}
+      />
     </div>
   );
 }

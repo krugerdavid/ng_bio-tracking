@@ -43,6 +43,7 @@ export const TYPES = {
   RegisterMemberUseCase: Symbol.for("RegisterMemberUseCase"),
   ListMembersUseCase: Symbol.for("ListMembersUseCase"),
   GetMemberDetailsUseCase: Symbol.for("GetMemberDetailsUseCase"),
+  UpdateMemberUseCase: Symbol.for("UpdateMemberUseCase"),
 
   // Use Cases - Bioimpedance
   RecordBioimpedanceUseCase: Symbol.for("RecordBioimpedanceUseCase"),

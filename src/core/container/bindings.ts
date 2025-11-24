@@ -31,6 +31,7 @@ import { UserDomain } from "@domain/user/UserDomain";
 import { RegisterMemberUseCase } from "@application/member/use-cases/RegisterMemberUseCase";
 import { ListMembersUseCase } from "@application/member/use-cases/ListMembersUseCase";
 import { GetMemberDetailsUseCase } from "@application/member/use-cases/GetMemberDetailsUseCase";
+import { UpdateMemberUseCase } from "@application/member/use-cases/UpdateMemberUseCase";
 
 // Use Cases - Bioimpedance
 import { RecordBioimpedanceUseCase } from "@application/bioimpedance/use-cases/RecordBioimpedanceUseCase";
@@ -82,6 +83,8 @@ container.bind(TYPES.RegisterMemberUseCase).to(RegisterMemberUseCase).inSingleto
 container.bind(TYPES.ListMembersUseCase).to(ListMembersUseCase).inSingletonScope();
 
 container.bind(TYPES.GetMemberDetailsUseCase).to(GetMemberDetailsUseCase).inSingletonScope();
+
+container.bind(TYPES.UpdateMemberUseCase).to(UpdateMemberUseCase).inSingletonScope();
 
 // Use Cases - Bioimpedance
 container.bind(TYPES.RecordBioimpedanceUseCase).to(RecordBioimpedanceUseCase).inSingletonScope();
