@@ -13,7 +13,8 @@ interface MemberListPageProps {
   totalMembers: number;
   onSearch: (value: string) => void;
   onPageChange: (page: number) => void;
-  onRefresh: () => void; // Added onRefresh prop to reload list after registration
+  onRefresh: () => void;
+  onDelete: (id: string, name: string) => void;
 }
 
 export function MemberListPage({
@@ -85,7 +86,7 @@ export function MemberListPage({
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                 <path
                   fillRule="evenodd"
@@ -118,67 +119,22 @@ export function MemberListPage({
         </div>
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Nombre
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Frecuencia
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Edad
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Estado
-                  </th>
-                  <th scope="col" className="relative px-6 py-3">
-                    <span className="sr-only">Ver detalle</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {members.map(member => (
-                  <tr
-                    key={member.id}
-                    onClick={() => navigate(`/member/${member.id}`)}
-                    className={`hover:bg-gray-50 transition-colors duration-150 cursor-pointer ${member.status === "moroso" ? "bg-red-50" : ""}`}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg">
-                            {member.name.charAt(0).toUpperCase()}
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                          <div className="text-xs text-gray-500">{member.documentNumber}</div>
-                          <div className="text-xs text-gray-500">{member.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{member.frequency}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{member.age} años</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+          <ul role="list" className="divide-y divide-gray-100 dark:divide-gray-800">
+            {members.map(member => (
+              <li
+                key={member.id}
+                onClick={() => navigate(`/member/${member.id}`)}
+                className={`flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5 px-6 sm:flex-nowrap hover:bg-gray-50 transition-colors duration-150 cursor-pointer ${
+                  member.status === "moroso" ? "bg-red-50 hover:bg-red-100" : ""
+                }`}
+              >
+                <div className="flex gap-x-4 items-center min-w-0">
+                  <div className="h-12 w-12 flex-none rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-xl">
+                    {member.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-auto">
+                    <p className="text-sm font-semibold leading-6 text-gray-900">
+                      {member.name}
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           member.status === "active"
@@ -190,15 +146,28 @@ export function MemberListPage({
                       >
                         {member.status === "active" ? "Al día" : member.status === "moroso" ? "Moroso" : "Inactivo"}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <span className="text-orange-600 hover:text-orange-900 font-semibold">Ver detalle</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </p>
+                    <div className="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
+                      <p className="truncate">{member.email || "Sin email"}</p>
+                      <svg viewBox="0 0 2 2" className="h-0.5 w-0.5 fill-current">
+                        <circle r={1} cx={1} cy={1} />
+                      </svg>
+                      <p className="whitespace-nowrap">{member.documentNumber}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-auto items-center justify-between sm:justify-end gap-x-6 sm:w-auto w-full">
+                    <div className="flex flex-col items-end gap-y-1">
+                      <p className="text-sm leading-6 text-gray-900">{member.frequency}</p>
+                      <div className="flex items-center gap-x-2">
+                        <p className="text-xs leading-5 text-gray-500">{member.age} años</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
 
           {/* Pagination */}
           {totalPages > 1 && (

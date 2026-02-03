@@ -9,9 +9,11 @@ import "reflect-metadata";
 
 import { container } from "./DIContainer";
 import { TYPES } from "./DIContainer";
+import { getApiBaseUrl } from "@core/config/api";
 
-// Infrastructure - Supabase Client
-import { supabase } from "@infrastructure/supabase/client";
+// Infrastructure - REST API (Laravel)
+import { ApiClient } from "@infrastructure/api/ApiClient";
+import { HttpClient } from "@infrastructure/api/HttpClient";
 
 // Repositories
 import { MemberRepositoryImpl } from "@infrastructure/member/MemberRepositoryImpl";
@@ -32,9 +34,12 @@ import { RegisterMemberUseCase } from "@application/member/use-cases/RegisterMem
 import { ListMembersUseCase } from "@application/member/use-cases/ListMembersUseCase";
 import { GetMemberDetailsUseCase } from "@application/member/use-cases/GetMemberDetailsUseCase";
 import { UpdateMemberUseCase } from "@application/member/use-cases/UpdateMemberUseCase";
+import { DeleteMemberUseCase } from "@application/member/use-cases/DeleteMemberUseCase";
 
 // Use Cases - Bioimpedance
 import { RecordBioimpedanceUseCase } from "@application/bioimpedance/use-cases/RecordBioimpedanceUseCase";
+import { UpdateBioimpedanceUseCase } from "@application/bioimpedance/use-cases/UpdateBioimpedanceUseCase";
+import { DeleteBioimpedanceUseCase } from "@application/bioimpedance/use-cases/DeleteBioimpedanceUseCase";
 
 // Use Cases - Auth
 import { LoginUseCase } from "@application/auth/use-cases/LoginUseCase";
@@ -48,12 +53,18 @@ import { DeleteUserUseCase } from "@application/admin/use-cases/DeleteUserUseCas
 
 // Use Cases - Payment
 import { RecordPaymentUseCase } from "@application/payment/use-cases/RecordPaymentUseCase";
+import { UpdatePaymentUseCase } from "@application/payment/use-cases/UpdatePaymentUseCase";
+import { DeletePaymentUseCase } from "@application/payment/use-cases/DeletePaymentUseCase";
 import { GetPaymentStatusUseCase } from "@application/payment/use-cases/GetPaymentStatusUseCase";
 import { UpdateMembershipPlanUseCase } from "@application/payment/use-cases/UpdateMembershipPlanUseCase";
 import { GetMembershipPlanUseCase } from "@application/payment/use-cases/GetMembershipPlanUseCase";
 
-// Infrastructure Services
-container.bind(TYPES.SupabaseClient).toConstantValue(supabase);
+// Infrastructure - API client (Axios + Laravel response; session via token in localStorage)
+container
+  .bind(TYPES.ApiClient)
+  .toDynamicValue(() => new ApiClient(getApiBaseUrl()))
+  .inSingletonScope();
+container.bind(TYPES.HttpClient).to(HttpClient).inSingletonScope();
 
 // Repository Implementations
 container.bind(TYPES.MemberRepository).to(MemberRepositoryImpl).inSingletonScope();
@@ -86,8 +97,12 @@ container.bind(TYPES.GetMemberDetailsUseCase).to(GetMemberDetailsUseCase).inSing
 
 container.bind(TYPES.UpdateMemberUseCase).to(UpdateMemberUseCase).inSingletonScope();
 
+container.bind(TYPES.DeleteMemberUseCase).to(DeleteMemberUseCase).inSingletonScope();
+
 // Use Cases - Bioimpedance
 container.bind(TYPES.RecordBioimpedanceUseCase).to(RecordBioimpedanceUseCase).inSingletonScope();
+container.bind(TYPES.UpdateBioimpedanceUseCase).to(UpdateBioimpedanceUseCase).inSingletonScope();
+container.bind(TYPES.DeleteBioimpedanceUseCase).to(DeleteBioimpedanceUseCase).inSingletonScope();
 
 // Use Cases - Auth
 container.bind(TYPES.LoginUseCase).to(LoginUseCase).inSingletonScope();
@@ -105,6 +120,8 @@ container.bind(TYPES.DeleteUserUseCase).to(DeleteUserUseCase).inSingletonScope()
 
 // Use Cases - Payment
 container.bind(TYPES.RecordPaymentUseCase).to(RecordPaymentUseCase).inSingletonScope();
+container.bind(TYPES.UpdatePaymentUseCase).to(UpdatePaymentUseCase).inSingletonScope();
+container.bind(TYPES.DeletePaymentUseCase).to(DeletePaymentUseCase).inSingletonScope();
 
 container.bind(TYPES.GetPaymentStatusUseCase).to(GetPaymentStatusUseCase).inSingletonScope();
 

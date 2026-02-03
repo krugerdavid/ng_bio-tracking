@@ -15,3 +15,4 @@ export interface Bioimpedance {
 }
 
 export type CreateBioimpedanceDTO = Omit<Bioimpedance, "id" | "createdAt">;
+export type UpdateBioimpedanceDTO = Partial<Omit<CreateBioimpedanceDTO, "memberId">>;

@@ -18,9 +18,11 @@ export const container = new Container();
 export const TYPES = {
   // Infrastructure Services
   SupabaseClient: Symbol.for("SupabaseClient"),
-
-  // Type for Supabase Client
   SupabaseClientType: Symbol.for("SupabaseClientType"),
+
+  // REST API (Laravel)
+  ApiClient: Symbol.for("ApiClient"),
+  HttpClient: Symbol.for("HttpClient"),
 
   // Repositories
   MemberRepository: Symbol.for("MemberRepository"),
@@ -44,9 +46,12 @@ export const TYPES = {
   ListMembersUseCase: Symbol.for("ListMembersUseCase"),
   GetMemberDetailsUseCase: Symbol.for("GetMemberDetailsUseCase"),
   UpdateMemberUseCase: Symbol.for("UpdateMemberUseCase"),
+  DeleteMemberUseCase: Symbol.for("DeleteMemberUseCase"),
 
   // Use Cases - Bioimpedance
   RecordBioimpedanceUseCase: Symbol.for("RecordBioimpedanceUseCase"),
+  UpdateBioimpedanceUseCase: Symbol.for("UpdateBioimpedanceUseCase"),
+  DeleteBioimpedanceUseCase: Symbol.for("DeleteBioimpedanceUseCase"),
 
   // Use Cases - Auth
   LoginUseCase: Symbol.for("LoginUseCase"),
@@ -60,6 +65,8 @@ export const TYPES = {
 
   // Use Cases - Payment
   RecordPaymentUseCase: Symbol.for("RecordPaymentUseCase"),
+  UpdatePaymentUseCase: Symbol.for("UpdatePaymentUseCase"),
+  DeletePaymentUseCase: Symbol.for("DeletePaymentUseCase"),
   GetPaymentStatusUseCase: Symbol.for("GetPaymentStatusUseCase"),
   UpdateMembershipPlanUseCase: Symbol.for("UpdateMembershipPlanUseCase"),
   GetMembershipPlanUseCase: Symbol.for("GetMembershipPlanUseCase"),

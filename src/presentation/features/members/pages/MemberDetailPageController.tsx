@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { container } from "@core/container/bindings";
 import { TYPES } from "@core/container/DIContainer";
 import type { GetMemberDetailsUseCase, MemberDetails } from "@application/member/use-cases/GetMemberDetailsUseCase";
 import type { RecordBioimpedanceUseCase } from "@application/bioimpedance/use-cases/RecordBioimpedanceUseCase";
-import type { CreateBioimpedanceDTO } from "@domain/bioimpedance/entities/Bioimpedance";
+import type { UpdateBioimpedanceUseCase } from "@application/bioimpedance/use-cases/UpdateBioimpedanceUseCase";
+import type { DeleteBioimpedanceUseCase } from "@application/bioimpedance/use-cases/DeleteBioimpedanceUseCase";
+import type { CreateBioimpedanceDTO, UpdateBioimpedanceDTO } from "@domain/bioimpedance/entities/Bioimpedance";
 import type { RecordPaymentUseCase } from "@application/payment/use-cases/RecordPaymentUseCase";
+import type { UpdatePaymentUseCase } from "@application/payment/use-cases/UpdatePaymentUseCase";
+import type { DeletePaymentUseCase } from "@application/payment/use-cases/DeletePaymentUseCase";
+import type { UpdatePaymentDTO } from "@domain/payment/entities/Payment";
 import type {
   GetPaymentStatusUseCase,
   PaymentStatusResult,
@@ -16,8 +21,11 @@ import type { CreatePaymentDTO } from "@domain/payment/entities/Payment";
 import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import { MemberDetailPage } from "./MemberDetailPage";
 
+import type { DeleteMemberUseCase } from "@application/member/use-cases/DeleteMemberUseCase";
+
 export default function MemberDetailPageController() {
   const { memberId } = useParams<{ memberId: string }>();
+  const navigate = useNavigate();
   const [details, setDetails] = useState<MemberDetails | null>(null);
   const [membershipPlan, setMembershipPlan] = useState<MembershipPlan | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusResult | null>(null);
@@ -27,10 +35,15 @@ export default function MemberDetailPageController() {
 
   const getMemberDetailsUseCase = container.get<GetMemberDetailsUseCase>(TYPES.GetMemberDetailsUseCase);
   const recordBioimpedanceUseCase = container.get<RecordBioimpedanceUseCase>(TYPES.RecordBioimpedanceUseCase);
+  const updateBioimpedanceUseCase = container.get<UpdateBioimpedanceUseCase>(TYPES.UpdateBioimpedanceUseCase);
+  const deleteBioimpedanceUseCase = container.get<DeleteBioimpedanceUseCase>(TYPES.DeleteBioimpedanceUseCase);
   const recordPaymentUseCase = container.get<RecordPaymentUseCase>(TYPES.RecordPaymentUseCase);
+  const updatePaymentUseCase = container.get<UpdatePaymentUseCase>(TYPES.UpdatePaymentUseCase);
+  const deletePaymentUseCase = container.get<DeletePaymentUseCase>(TYPES.DeletePaymentUseCase);
   const getPaymentStatusUseCase = container.get<GetPaymentStatusUseCase>(TYPES.GetPaymentStatusUseCase);
   const getMembershipPlanUseCase = container.get<GetMembershipPlanUseCase>(TYPES.GetMembershipPlanUseCase);
   const updateMembershipPlanUseCase = container.get<UpdateMembershipPlanUseCase>(TYPES.UpdateMembershipPlanUseCase);
+  const deleteMemberUseCase = container.get<DeleteMemberUseCase>(TYPES.DeleteMemberUseCase);
 
   const fetchPaymentData = async () => {
     if (!memberId) return;
@@ -120,6 +133,62 @@ export default function MemberDetailPageController() {
     await fetchDetails();
   };
 
+  const handleDeleteMember = async () => {
+    if (!memberId) return;
+
+    const result = await deleteMemberUseCase.execute(memberId);
+
+    if (result.isError()) {
+      throw new Error(result.getError());
+    } else {
+      navigate("/members");
+    }
+  };
+
+  const handleUpdateBioimpedance = async (id: string, data: UpdateBioimpedanceDTO) => {
+    const result = await updateBioimpedanceUseCase.execute(id, data);
+
+    if (result.isError()) {
+      console.error("Error updating bioimpedance:", result.getError());
+      throw new Error(result.getError());
+    } else {
+      await fetchDetails();
+    }
+  };
+
+  const handleDeleteBioimpedance = async (id: string) => {
+    const result = await deleteBioimpedanceUseCase.execute(id);
+
+    if (result.isError()) {
+      console.error("Error deleting bioimpedance:", result.getError());
+      throw new Error(result.getError());
+    } else {
+      await fetchDetails();
+    }
+  };
+
+  const handleUpdatePayment = async (id: string, data: UpdatePaymentDTO) => {
+    const result = await updatePaymentUseCase.execute(id, data);
+
+    if (result.isError()) {
+      console.error("Error updating payment:", result.getError());
+      alert("Error al actualizar el pago: " + result.getError());
+    } else {
+      await fetchPaymentData();
+    }
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    const result = await deletePaymentUseCase.execute(id);
+
+    if (result.isError()) {
+      console.error("Error deleting payment:", result.getError());
+      alert("Error al eliminar el pago: " + result.getError());
+    } else {
+      await fetchPaymentData();
+    }
+  };
+
   return (
     <MemberDetailPage
       details={details}
@@ -132,6 +201,11 @@ export default function MemberDetailPageController() {
       onRecordPayment={handleRecordPayment}
       onUpdatePlan={handleUpdatePlan}
       onUpdateMember={handleUpdateMember}
+      onDeleteMember={handleDeleteMember}
+      onUpdateBioimpedance={handleUpdateBioimpedance}
+      onDeleteBioimpedance={handleDeleteBioimpedance}
+      onUpdatePayment={handleUpdatePayment}
+      onDeletePayment={handleDeletePayment}
     />
   );
 }

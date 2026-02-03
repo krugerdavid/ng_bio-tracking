@@ -16,7 +16,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const authRepository = container.get<AuthRepository>(TYPES.AuthRepository);
 
   useEffect(() => {
-    const unsubscribe = authRepository.onAuthStateChange(async (user: User | null) => {
+    let cancelled = false;
+
+    // Obtener sesión inicial de forma explícita (Supabase onAuthStateChange no siempre dispara al montar)
+    authRepository.getCurrentUser().then(result => {
+      if (cancelled) return;
+      const user = result.isSuccess() ? result.getValue() : null;
       setAuthState(prev => ({
         ...prev,
         user,
@@ -26,7 +31,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }));
     });
 
-    return unsubscribe;
+    const unsubscribe = authRepository.onAuthStateChange((user: User | null) => {
+      if (cancelled) return;
+      setAuthState(prev => ({
+        ...prev,
+        user,
+        isLoading: false,
+        isAuthenticated: user !== null,
+        error: null,
+      }));
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [authRepository]);
 
   const login = useCallback(

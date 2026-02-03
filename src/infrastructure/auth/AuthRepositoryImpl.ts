@@ -3,182 +3,87 @@ import { TYPES } from "@core/container/DIContainer";
 import { Result } from "@core/types/Result";
 import type { User } from "@domain/user/entities/User";
 import type { AuthRepository } from "@domain/auth/AuthRepository";
-import { Role } from "@domain/shared/value-objects/Role";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Role } from "@domain/shared/value-objects/Role";
+import type { ApiClient } from "@infrastructure/api/ApiClient";
+import type { HttpClient } from "@infrastructure/api/HttpClient";
+import { ApiError } from "@infrastructure/api/types";
+
+interface LoginResponse {
+  user: UserApi;
+  access_token: string;
+  token_type: string;
+}
+
+interface UserApi {
+  id: string;
+  name?: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+function mapUserApiToUser(api: UserApi): User {
+  return {
+    id: api.id,
+    email: api.email,
+    role: (api.role as Role) ?? "user",
+    createdAt: new Date(api.created_at),
+  };
+}
 
 @injectable()
 export class AuthRepositoryImpl implements AuthRepository {
-  constructor(@inject(TYPES.SupabaseClient) private supabase: SupabaseClient) {}
-
-  private readonly USER_PROFILE_CACHE_KEY = "bio-tracker-user-role";
+  constructor(
+    @inject(TYPES.HttpClient) private readonly http: HttpClient,
+    @inject(TYPES.ApiClient) private readonly apiClient: ApiClient
+  ) {}
 
   async login(email: string, password: string): Promise<Result<User>> {
     try {
-      const { data, error } = await this.supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        return Result.error(`Login failed: ${error.message}`);
-      }
-
-      if (!data.user) {
-        return Result.error("Login failed: No user data returned");
-      }
-
-      const user = await this.mapToUser(data.user);
-      return Result.success(user);
-    } catch (error) {
-      return Result.error(error instanceof Error ? error.message : "Unknown error during login");
+      const data = await this.http.post<LoginResponse>("/login", { email, password });
+      this.apiClient.setToken(data.access_token);
+      return Result.success(mapUserApiToUser(data.user));
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Login failed";
+      return Result.error(message);
     }
   }
 
   async logout(): Promise<Result<void>> {
     try {
-      const { error } = await this.supabase.auth.signOut();
-
-      if (error) {
-        return Result.error(`Logout failed: ${error.message}`);
-      }
-
-      // Clear cached profile
-      localStorage.removeItem(this.USER_PROFILE_CACHE_KEY);
-
-      return Result.success(undefined);
-    } catch (error) {
-      return Result.error(error instanceof Error ? error.message : "Unknown error during logout");
+      await this.http.post("/logout");
+    } catch {
+      // Clear session even if server request fails (e.g. network)
     }
+    this.apiClient.clearToken();
+    return Result.success(undefined);
   }
 
   async getCurrentUser(): Promise<Result<User | null>> {
+    const token = this.apiClient.getToken();
+    if (!token) {
+      return Result.success(null);
+    }
     try {
-      const {
-        data: { user },
-        error,
-      } = await this.supabase.auth.getUser();
-
-      if (error) {
-        return Result.error(`Failed to get current user: ${error.message}`);
-      }
-
-      if (!user) {
+      const user = await this.http.get<UserApi>("/me");
+      return Result.success(mapUserApiToUser(user));
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 401) {
         return Result.success(null);
       }
-
-      const mappedUser = await this.mapToUser(user);
-      return Result.success(mappedUser);
-    } catch (error) {
-      return Result.error(error instanceof Error ? error.message : "Unknown error getting current user");
+      return Result.error(err instanceof ApiError ? err.message : "Failed to get user");
     }
   }
 
   onAuthStateChange(callback: (user: User | null) => void): () => void {
-    // Get initial state immediately
-    this.getInitialAuthState(callback);
-
-    // Subscribe to future changes
-    const {
-      data: { subscription },
-    } = this.supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        try {
-          const user = await this.mapToUser(session.user);
-          callback(user);
-        } catch (error) {
-          console.error("Error mapping user in auth state change:", error);
-          callback(null);
-        }
-      } else {
-        // Clear cache on session end/logout
-        localStorage.removeItem(this.USER_PROFILE_CACHE_KEY);
-        callback(null);
-      }
+    const unsubscribe = this.apiClient.addAuthStateListener(async () => {
+      const result = await this.getCurrentUser();
+      callback(result.isSuccess() ? result.getValue() : null);
     });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }
-
-  private async getInitialAuthState(callback: (user: User | null) => void): Promise<void> {
-    try {
-      // Add a timeout to prevent infinite loading
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Auth initialization timeout")), 10000)
-      );
-
-      const result = (await Promise.race([this.getCurrentUser(), timeoutPromise])) as Result<User | null>;
-
-      if (result.isSuccess()) {
-        callback(result.getValue());
-      } else {
-        callback(null);
-      }
-    } catch (error) {
-      console.error("Error getting initial auth state:", error);
-      // Ensure we always call callback to stop loading state
-      callback(null);
-    }
-  }
-
-  private async mapToUser(authUser: { id: string; email?: string | null; created_at: string }): Promise<User> {
-    let role: Role = Role.USER;
-
-    try {
-      // Check cache first
-      const cachedProfile = localStorage.getItem(this.USER_PROFILE_CACHE_KEY);
-      if (cachedProfile) {
-        try {
-          const parsed = JSON.parse(cachedProfile);
-          if (parsed.userId === authUser.id && parsed.role) {
-            // Use cached role
-            role = parsed.role as Role;
-            return {
-              id: authUser.id,
-              email: authUser.email!,
-              role,
-              createdAt: new Date(authUser.created_at),
-            };
-          }
-        } catch {
-          console.warn("Invalid cached profile, fetching fresh one");
-          localStorage.removeItem(this.USER_PROFILE_CACHE_KEY);
-        }
-      }
-
-      // Add timeout for profile fetch
-      const profilePromise = this.supabase.from("user_profiles").select("role").eq("user_id", authUser.id).single();
-
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Profile fetch timeout")), 5000)
-      );
-
-      const { data: profile } = (await Promise.race([profilePromise, timeoutPromise])) as {
-        data: { role: string } | null;
-      };
-
-      if (profile?.role) {
-        role = profile.role as Role;
-        // Cache the result
-        localStorage.setItem(
-          this.USER_PROFILE_CACHE_KEY,
-          JSON.stringify({
-            userId: authUser.id,
-            role: role,
-          })
-        );
-      }
-    } catch (error) {
-      // Silently fail and use default role
-      console.warn("Could not fetch user profile, using default role:", error);
-    }
-
-    return {
-      id: authUser.id,
-      email: authUser.email!,
-      role,
-      createdAt: new Date(authUser.created_at),
-    };
+    // Initial state
+    this.getCurrentUser().then(result => {
+      callback(result.isSuccess() ? (result.getValue() ?? null) : null);
+    });
+    return unsubscribe;
   }
 }

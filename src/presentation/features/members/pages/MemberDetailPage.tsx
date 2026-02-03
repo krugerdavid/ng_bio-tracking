@@ -1,15 +1,16 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import type { MemberDetails } from "@application/member/use-cases/GetMemberDetailsUseCase";
-import type { CreateBioimpedanceDTO } from "@domain/bioimpedance/entities/Bioimpedance";
-import type { CreatePaymentDTO } from "@domain/payment/entities/Payment";
+import type { CreateBioimpedanceDTO, UpdateBioimpedanceDTO } from "@domain/bioimpedance/entities/Bioimpedance";
+import type { CreatePaymentDTO, UpdatePaymentDTO } from "@domain/payment/entities/Payment";
 import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaymentStatusUseCase";
 import { PaymentSection } from "../components/PaymentSection";
 import { UpdateMemberModal } from "../components/UpdateMemberModal";
-import { Modal } from "../../../shared/components/Modal";
+import { FormModal } from "../../../shared/components/FormModal";
 import { Tabs } from "../../../shared/components/Tabs";
 import { PageLoader } from "../../../shared/components/PageLoader";
+import { DeleteConfirmationModal } from "../../../shared/components/DeleteConfirmationModal";
 import { formatWithThousandsSeparator } from "../../../shared/utils/formatters";
 
 interface MemberDetailPageProps {
@@ -28,6 +29,11 @@ interface MemberDetailPageProps {
     isActive: boolean;
   }) => Promise<void>;
   onUpdateMember: () => Promise<void>;
+  onDeleteMember: () => Promise<void>;
+  onUpdateBioimpedance: (id: string, data: UpdateBioimpedanceDTO) => Promise<void>;
+  onDeleteBioimpedance: (id: string) => Promise<void>;
+  onUpdatePayment: (id: string, data: UpdatePaymentDTO) => Promise<void>;
+  onDeletePayment: (id: string) => Promise<void>;
 }
 
 // Helper function to format dates correctly in local timezone
@@ -56,11 +62,13 @@ const getTrendIndicator = (current: number, previous: number | null): { icon: st
 const MetricCard = ({
   label,
   value,
+  previousValue,
   unit,
   trend,
 }: {
   label: string;
   value: number;
+  previousValue: number | null;
   unit: string;
   trend: { icon: string; color: string } | null;
 }) => (
@@ -68,7 +76,7 @@ const MetricCard = ({
     <div className="flex items-center justify-between mb-1">
       <p className="text-xs text-gray-600 font-semibold">{label}</p>
     </div>
-    <div className="flex items-center justify-between mb-1">
+    <div className="flex flex-col items-start justify-between mb-1">
       <p className="text-2xl font-bold text-gray-900 flex items-center gap-2">
         {value} {unit}{" "}
         {trend && (
@@ -77,6 +85,7 @@ const MetricCard = ({
           </span>
         )}
       </p>
+      <p className="text-sm text-gray-400 font-semibold">{previousValue ? `${previousValue} ${unit}` : "N/A"}</p>
     </div>
   </div>
 );
@@ -91,10 +100,22 @@ export function MemberDetailPage({
   onRecordPayment,
   onUpdatePlan,
   onUpdateMember,
+  onDeleteMember,
+  onUpdateBioimpedance,
+  onDeleteBioimpedance,
+  onUpdatePayment,
+  onDeletePayment,
 }: MemberDetailPageProps) {
   const [activeTab, setActiveTab] = useState("bioimpedancia");
   const [showBioModal, setShowBioModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteBioModal, setShowDeleteBioModal] = useState(false);
+  const [editingBioimpedance, setEditingBioimpedance] = useState<{ id: string; date: Date } | null>(null);
+  const [bioimpedanceToDelete, setBioimpedanceToDelete] = useState<{ id: string; date: string } | null>(null);
+  const [isDeletingBio, setIsDeletingBio] = useState(false);
+  const [isSavingBio, setIsSavingBio] = useState(false);
+  const [bioFormError, setBioFormError] = useState<string>("");
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     height: "",
@@ -110,25 +131,61 @@ export function MemberDetailPage({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setBioFormError("");
     if (!details) return;
 
-    try {
-      const bioData: CreateBioimpedanceDTO = {
-        memberId: details.member.id,
-        date: new Date(formData.date),
-        height: parseFloat(formData.height),
-        weight: parseFloat(formData.weight),
-        imc: parseFloat(formData.imc),
-        bodyFatPercentage: parseFloat(formData.bodyFatPercentage),
-        muscleMassPercentage: parseFloat(formData.muscleMassPercentage),
-        kcal: parseFloat(formData.kcal),
-        metabolicAge: parseFloat(formData.metabolicAge),
-        visceralFatPercentage: parseFloat(formData.visceralFatPercentage),
-        notes: formData.notes || undefined,
-      };
+    const height = parseFloat(formData.height);
+    const weight = parseFloat(formData.weight);
+    const imc = parseFloat(formData.imc);
+    const bodyFatPercentage = parseFloat(formData.bodyFatPercentage);
+    const muscleMassPercentage = parseFloat(formData.muscleMassPercentage);
+    const kcal = parseFloat(formData.kcal);
+    const metabolicAge = parseFloat(formData.metabolicAge);
+    const visceralFatPercentage = parseFloat(formData.visceralFatPercentage);
 
-      await onSubmit(bioData);
+    if (
+      [height, weight, imc, bodyFatPercentage, muscleMassPercentage, kcal, metabolicAge, visceralFatPercentage].some(
+        Number.isNaN
+      )
+    ) {
+      setBioFormError("Todos los campos numéricos deben tener un valor válido.");
+      return;
+    }
+
+    setIsSavingBio(true);
+    try {
+      if (editingBioimpedance) {
+        const updateData: UpdateBioimpedanceDTO = {
+          date: new Date(formData.date),
+          height,
+          weight,
+          imc,
+          bodyFatPercentage,
+          muscleMassPercentage,
+          kcal,
+          metabolicAge,
+          visceralFatPercentage,
+          notes: formData.notes || undefined,
+        };
+        await onUpdateBioimpedance(editingBioimpedance.id, updateData);
+      } else {
+        const bioData: CreateBioimpedanceDTO = {
+          memberId: details.member.id,
+          date: new Date(formData.date),
+          height,
+          weight,
+          imc,
+          bodyFatPercentage,
+          muscleMassPercentage,
+          kcal,
+          metabolicAge,
+          visceralFatPercentage,
+          notes: formData.notes || undefined,
+        };
+        await onSubmit(bioData);
+      }
       setShowBioModal(false);
+      setEditingBioimpedance(null);
       setFormData({
         date: new Date().toISOString().split("T")[0],
         height: "",
@@ -142,7 +199,24 @@ export function MemberDetailPage({
         notes: "",
       });
     } catch (error) {
-      console.error("Error recording bioimpedance:", error);
+      console.error("Error saving bioimpedance:", error);
+      setBioFormError(error instanceof Error ? error.message : "Error al guardar. Intenta de nuevo.");
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
+  const handleDeleteBioimpedance = async () => {
+    if (!bioimpedanceToDelete) return;
+    setIsDeletingBio(true);
+    try {
+      await onDeleteBioimpedance(bioimpedanceToDelete.id);
+      setShowDeleteBioModal(false);
+      setBioimpedanceToDelete(null);
+    } catch (error) {
+      console.error("Error deleting bioimpedance:", error);
+    } finally {
+      setIsDeletingBio(false);
     }
   };
 
@@ -186,22 +260,38 @@ export function MemberDetailPage({
       <div className="mb-8 bg-white rounded-2xl shadow-sm border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row justify-between gap-4 sm:items-center">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-2 justify-between">
               <h1 className="text-3xl font-bold text-gray-900">{member.name}</h1>
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-full transition-all duration-200"
-                title="Editar información"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                  />
-                </svg>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-full transition-all duration-200"
+                  title="Editar información"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
+                  title="Eliminar miembro"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
             <p className="text-sm text-gray-600 mb-2 truncate">
               {formatWithThousandsSeparator(member.documentNumber)} &middot; {member.email}
@@ -284,7 +374,23 @@ export function MemberDetailPage({
           <div className="flex flex-row justify-between items-center gap-3 mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Gestión Bioimpedancia</h2>
             <button
-              onClick={() => setShowBioModal(true)}
+              onClick={() => {
+                setBioFormError("");
+                setEditingBioimpedance(null);
+                setFormData({
+                  date: new Date().toISOString().split("T")[0],
+                  height: "",
+                  weight: "",
+                  imc: "",
+                  bodyFatPercentage: "",
+                  muscleMassPercentage: "",
+                  kcal: "",
+                  metabolicAge: "",
+                  visceralFatPercentage: "",
+                  notes: "",
+                });
+                setShowBioModal(true);
+              }}
               className="
                 flex items-center justify-center gap-2
                 w-12 h-12 sm:w-auto sm:h-auto
@@ -316,30 +422,56 @@ export function MemberDetailPage({
                     })}
                   </p>
                 </div>
+                <button
+                  onClick={() => {
+                    setBioFormError("");
+                    setEditingBioimpedance({ id: latestBioimpedance.id, date: latestBioimpedance.date });
+                    setFormData({
+                      date: new Date(latestBioimpedance.date).toISOString().split("T")[0],
+                      height: latestBioimpedance.height.toString(),
+                      weight: latestBioimpedance.weight.toString(),
+                      imc: latestBioimpedance.imc.toString(),
+                      bodyFatPercentage: latestBioimpedance.bodyFatPercentage.toString(),
+                      muscleMassPercentage: latestBioimpedance.muscleMassPercentage.toString(),
+                      kcal: latestBioimpedance.kcal.toString(),
+                      metabolicAge: latestBioimpedance.metabolicAge.toString(),
+                      visceralFatPercentage: latestBioimpedance.visceralFatPercentage.toString(),
+                      notes: latestBioimpedance.notes ?? "",
+                    });
+                    setShowBioModal(true);
+                  }}
+                  className="text-orange-500 hover:text-orange-600 font-semibold"
+                >
+                  Editar
+                </button>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 <MetricCard
                   label="Estatura"
                   value={latestBioimpedance.height}
+                  previousValue={previousBioimpedance?.height ?? null}
                   unit="cm"
                   trend={getTrendIndicator(latestBioimpedance.height, previousBioimpedance?.height ?? null)}
                 />
                 <MetricCard
                   label="Peso"
                   value={latestBioimpedance.weight}
+                  previousValue={previousBioimpedance?.weight ?? null}
                   unit="kg"
                   trend={getTrendIndicator(latestBioimpedance.weight, previousBioimpedance?.weight ?? null)}
                 />
                 <MetricCard
                   label="IMC"
                   value={latestBioimpedance.imc}
+                  previousValue={previousBioimpedance?.imc ?? null}
                   unit=""
                   trend={getTrendIndicator(latestBioimpedance.imc, previousBioimpedance?.imc ?? null)}
                 />
                 <MetricCard
                   label="% Grasa"
                   value={latestBioimpedance.bodyFatPercentage}
+                  previousValue={previousBioimpedance?.bodyFatPercentage ?? null}
                   unit="%"
                   trend={getTrendIndicator(
                     latestBioimpedance.bodyFatPercentage,
@@ -349,6 +481,7 @@ export function MemberDetailPage({
                 <MetricCard
                   label="% Músculo"
                   value={latestBioimpedance.muscleMassPercentage}
+                  previousValue={previousBioimpedance?.muscleMassPercentage ?? null}
                   unit="%"
                   trend={getTrendIndicator(
                     latestBioimpedance.muscleMassPercentage,
@@ -358,18 +491,21 @@ export function MemberDetailPage({
                 <MetricCard
                   label="KCAL"
                   value={latestBioimpedance.kcal}
+                  previousValue={previousBioimpedance?.kcal ?? null}
                   unit=""
                   trend={getTrendIndicator(latestBioimpedance.kcal, previousBioimpedance?.kcal ?? null)}
                 />
                 <MetricCard
                   label="Edad Metabólica"
                   value={latestBioimpedance.metabolicAge}
+                  previousValue={previousBioimpedance?.metabolicAge ?? null}
                   unit="años"
                   trend={getTrendIndicator(latestBioimpedance.metabolicAge, previousBioimpedance?.metabolicAge ?? null)}
                 />
                 <MetricCard
                   label="% Grasa Visceral"
                   value={latestBioimpedance.visceralFatPercentage}
+                  previousValue={previousBioimpedance?.visceralFatPercentage ?? null}
                   unit="%"
                   trend={getTrendIndicator(
                     latestBioimpedance.visceralFatPercentage,
@@ -458,6 +594,12 @@ export function MemberDetailPage({
                       >
                         Notas
                       </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Acciones
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -481,6 +623,56 @@ export function MemberDetailPage({
                           {record.visceralFatPercentage}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.notes || "-"}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingBioimpedance({ id: record.id, date: record.date });
+                                setFormData({
+                                  date: new Date(record.date).toISOString().split("T")[0],
+                                  height: record.height.toString(),
+                                  weight: record.weight.toString(),
+                                  imc: record.imc.toString(),
+                                  bodyFatPercentage: record.bodyFatPercentage.toString(),
+                                  muscleMassPercentage: record.muscleMassPercentage.toString(),
+                                  kcal: record.kcal.toString(),
+                                  metabolicAge: record.metabolicAge.toString(),
+                                  visceralFatPercentage: record.visceralFatPercentage.toString(),
+                                  notes: record.notes || "",
+                                });
+                                setShowBioModal(true);
+                              }}
+                              className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                              title="Editar"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setBioimpedanceToDelete({ id: record.id, date: formatLocalDate(record.date) });
+                                setShowDeleteBioModal(true);
+                              }}
+                              className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                              title="Eliminar"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -499,152 +691,168 @@ export function MemberDetailPage({
           loading={paymentLoading}
           onRecordPayment={onRecordPayment}
           onUpdatePlan={onUpdatePlan}
+          onUpdatePayment={onUpdatePayment}
+          onDeletePayment={onDeletePayment}
         />
       )}
 
       {/* Bioimpedance Registration Modal */}
-      <Modal
+      <FormModal
         isOpen={showBioModal}
-        onClose={() => setShowBioModal(false)}
-        title="Registrar Bioimpedancia"
+        onClose={() => {
+          setShowBioModal(false);
+          setEditingBioimpedance(null);
+          setBioFormError("");
+        }}
+        title={editingBioimpedance ? "Editar Bioimpedancia" : "Registrar Bioimpedancia"}
         size="lg"
-        footer={
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              form="bioimpedance-form"
-              className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600 transform hover:-translate-y-0.5 transition-all duration-300"
-            >
-              Guardar Registro
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowBioModal(false)}
-              className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
-          </div>
-        }
+        onSubmit={handleSubmit}
+        submitLabel={isSavingBio ? "Guardando..." : "Guardar Registro"}
+        loading={isSavingBio}
+        error={bioFormError}
+        formClassName="grid grid-cols-1 md:grid-cols-2 gap-2"
       >
-        <form id="bioimpedance-form" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha</label>
-            <input
-              type="date"
-              required
-              value={formData.date}
-              onChange={e => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Estatura (cm)</label>
-            <input
-              type="number"
-              step="0.1"
-              required
-              value={formData.height}
-              onChange={e => setFormData({ ...formData, height: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              placeholder="Ej: 175"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Peso (kg)</label>
-            <input
-              type="number"
-              step="0.1"
-              required
-              value={formData.weight}
-              onChange={e => setFormData({ ...formData, weight: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">IMC/BMI</label>
-            <input
-              type="number"
-              step="0.1"
-              required
-              value={formData.imc}
-              onChange={e => setFormData({ ...formData, imc: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">% de Grasa</label>
-            <input
-              type="number"
-              step="0.1"
-              required
-              value={formData.bodyFatPercentage}
-              onChange={e => setFormData({ ...formData, bodyFatPercentage: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">% de Músculo</label>
-            <input
-              type="number"
-              step="0.1"
-              required
-              value={formData.muscleMassPercentage}
-              onChange={e => setFormData({ ...formData, muscleMassPercentage: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">KCAL</label>
-            <input
-              type="number"
-              required
-              value={formData.kcal}
-              onChange={e => setFormData({ ...formData, kcal: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              placeholder="Calorías"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Edad Metabólica</label>
-            <input
-              type="number"
-              required
-              value={formData.metabolicAge}
-              onChange={e => setFormData({ ...formData, metabolicAge: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              placeholder="Años"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">% Grasa Visceral</label>
-            <input
-              type="number"
-              step="0.1"
-              required
-              value={formData.visceralFatPercentage}
-              onChange={e => setFormData({ ...formData, visceralFatPercentage: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Notas (opcional)</label>
-            <textarea
-              value={formData.notes}
-              onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              placeholder="Observaciones adicionales..."
-            />
-          </div>
-        </form>
-      </Modal>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha</label>
+          <input
+            type="date"
+            required
+            value={formData.date}
+            onChange={e => setFormData({ ...formData, date: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Estatura (cm)</label>
+          <input
+            type="number"
+            step="0.1"
+            required
+            value={formData.height}
+            onChange={e => setFormData({ ...formData, height: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+            placeholder="Ej: 175"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Peso (kg)</label>
+          <input
+            type="number"
+            step="0.1"
+            required
+            value={formData.weight}
+            onChange={e => setFormData({ ...formData, weight: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">IMC/BMI</label>
+          <input
+            type="number"
+            step="0.1"
+            required
+            value={formData.imc}
+            onChange={e => setFormData({ ...formData, imc: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">% de Grasa</label>
+          <input
+            type="number"
+            step="0.1"
+            required
+            value={formData.bodyFatPercentage}
+            onChange={e => setFormData({ ...formData, bodyFatPercentage: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">% de Músculo</label>
+          <input
+            type="number"
+            step="0.1"
+            required
+            value={formData.muscleMassPercentage}
+            onChange={e => setFormData({ ...formData, muscleMassPercentage: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">KCAL</label>
+          <input
+            type="number"
+            required
+            value={formData.kcal}
+            onChange={e => setFormData({ ...formData, kcal: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+            placeholder="Calorías"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Edad Metabólica</label>
+          <input
+            type="number"
+            required
+            value={formData.metabolicAge}
+            onChange={e => setFormData({ ...formData, metabolicAge: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+            placeholder="Años"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">% Grasa Visceral</label>
+          <input
+            type="number"
+            step="0.1"
+            required
+            value={formData.visceralFatPercentage}
+            onChange={e => setFormData({ ...formData, visceralFatPercentage: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Notas (opcional)</label>
+          <textarea
+            value={formData.notes}
+            onChange={e => setFormData({ ...formData, notes: e.target.value })}
+            rows={3}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+            placeholder="Observaciones adicionales..."
+          />
+        </div>
+      </FormModal>
 
       <UpdateMemberModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSuccess={onUpdateMember}
         member={details.member}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          await onDeleteMember();
+          setShowDeleteModal(false);
+        }}
+        title="Eliminar Deportista"
+        message={`¿Estás seguro que deseas eliminar a ${member.name}? Esta acción no se puede deshacer.`}
+        itemName={member.name}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteBioModal}
+        onClose={() => {
+          setShowDeleteBioModal(false);
+          setBioimpedanceToDelete(null);
+        }}
+        onConfirm={handleDeleteBioimpedance}
+        title="Eliminar Registro de Bioimpedancia"
+        message="¿Estás seguro que deseas eliminar este registro de bioimpedancia? Esta acción no se puede deshacer."
+        itemName={bioimpedanceToDelete ? `Registro del ${bioimpedanceToDelete.date}` : undefined}
+        loading={isDeletingBio}
       />
     </div>
   );

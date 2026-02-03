@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
-import type { CreatePaymentDTO } from "@domain/payment/entities/Payment";
+import type { CreatePaymentDTO, UpdatePaymentDTO } from "@domain/payment/entities/Payment";
 import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaymentStatusUseCase";
-import { Modal } from "../../../shared/components/Modal";
+import { FormModal } from "../../../shared/components/FormModal";
 import { CurrencyInput } from "../../../shared/components/CurrencyInput";
+import { DeleteConfirmationModal } from "../../../shared/components/DeleteConfirmationModal";
 
 interface PaymentSectionProps {
   memberId: string;
@@ -17,6 +18,8 @@ interface PaymentSectionProps {
     startDate: Date;
     isActive: boolean;
   }) => Promise<void>;
+  onUpdatePayment: (id: string, data: UpdatePaymentDTO) => Promise<void>;
+  onDeletePayment: (id: string) => Promise<void>;
 }
 
 export function PaymentSection({
@@ -26,9 +29,17 @@ export function PaymentSection({
   loading,
   onRecordPayment,
   onUpdatePlan,
+  onUpdatePayment,
+  onDeletePayment,
 }: PaymentSectionProps) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showDeletePaymentModal, setShowDeletePaymentModal] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<{ id: string; month: string } | null>(null);
+  const [paymentToDelete, setPaymentToDelete] = useState<{ id: string; month: string } | null>(null);
+  const [isDeletingPayment, setIsDeletingPayment] = useState(false);
+  const [isSavingPayment, setIsSavingPayment] = useState(false);
+  const [paymentFormError, setPaymentFormError] = useState("");
   const [paymentFormData, setPaymentFormData] = useState({
     month: new Date().toISOString().slice(0, 7),
     amount: membershipPlan?.monthlyFee?.toString() || "",
@@ -46,27 +57,67 @@ export function PaymentSection({
 
   const handleRecordPayment = async (e: FormEvent) => {
     e.preventDefault();
+    setPaymentFormError("");
     if (!membershipPlan) {
-      alert("Por favor configure el plan de membresía primero");
+      setPaymentFormError("Por favor configure el plan de membresía primero");
       return;
     }
 
-    await onRecordPayment({
-      memberId,
-      month: paymentFormData.month,
-      amount: parseFloat(paymentFormData.amount),
-      paymentDate: new Date(paymentFormData.paymentDate),
-      status: "paid",
-      notes: paymentFormData.notes || undefined,
-    });
+    const amount = parseFloat(paymentFormData.amount);
+    if (Number.isNaN(amount) || amount <= 0) {
+      setPaymentFormError("El monto debe ser un número mayor a 0.");
+      return;
+    }
 
-    setShowPaymentModal(false);
-    setPaymentFormData({
-      month: new Date().toISOString().slice(0, 7),
-      amount: membershipPlan.monthlyFee.toString(),
-      paymentDate: new Date().toISOString().split("T")[0],
-      notes: "",
-    });
+    setIsSavingPayment(true);
+    try {
+      if (editingPayment) {
+        const updateData: UpdatePaymentDTO = {
+          amount,
+          paymentDate: new Date(paymentFormData.paymentDate),
+          status: "paid",
+          notes: paymentFormData.notes || undefined,
+        };
+        await onUpdatePayment(editingPayment.id, updateData);
+      } else {
+        await onRecordPayment({
+          memberId,
+          month: paymentFormData.month,
+          amount,
+          paymentDate: new Date(paymentFormData.paymentDate),
+          status: "paid",
+          notes: paymentFormData.notes || undefined,
+        });
+      }
+
+      setShowPaymentModal(false);
+      setEditingPayment(null);
+      setPaymentFormData({
+        month: new Date().toISOString().slice(0, 7),
+        amount: membershipPlan.monthlyFee.toString(),
+        paymentDate: new Date().toISOString().split("T")[0],
+        notes: "",
+      });
+    } catch (error) {
+      console.error("Error saving payment:", error);
+      setPaymentFormError(error instanceof Error ? error.message : "Error al guardar. Intenta de nuevo.");
+    } finally {
+      setIsSavingPayment(false);
+    }
+  };
+
+  const handleDeletePayment = async () => {
+    if (!paymentToDelete) return;
+    setIsDeletingPayment(true);
+    try {
+      await onDeletePayment(paymentToDelete.id);
+      setShowDeletePaymentModal(false);
+      setPaymentToDelete(null);
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+    } finally {
+      setIsDeletingPayment(false);
+    }
   };
 
   const handleUpdatePlan = async (e: FormEvent) => {
@@ -110,7 +161,16 @@ export function PaymentSection({
       <div className="flex flex-row justify-between items-center gap-3 mb-6">
         <h2 className="text-xl font-bold text-gray-900">Gestión de Pagos</h2>
         <button
-          onClick={() => setShowPaymentModal(true)}
+          onClick={() => {
+            setEditingPayment(null);
+            setPaymentFormData({
+              month: new Date().toISOString().slice(0, 7),
+              amount: membershipPlan?.monthlyFee?.toString() || "",
+              paymentDate: new Date().toISOString().split("T")[0],
+              notes: "",
+            });
+            setShowPaymentModal(true);
+          }}
           className="
             flex items-center justify-center gap-2
             w-10 h-10 sm:w-auto sm:h-auto
@@ -232,6 +292,9 @@ export function PaymentSection({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -259,6 +322,50 @@ export function PaymentSection({
                         {payment.status === "paid" ? "Pagado" : payment.status === "overdue" ? "Vencido" : "Pendiente"}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingPayment({ id: payment.id, month: payment.month });
+                            setPaymentFormData({
+                              month: payment.month,
+                              amount: payment.amount.toString(),
+                              paymentDate: new Date(payment.paymentDate).toISOString().split("T")[0],
+                              notes: payment.notes || "",
+                            });
+                            setShowPaymentModal(true);
+                          }}
+                          className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                          title="Editar"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPaymentToDelete({ id: payment.id, month: payment.month });
+                            setShowDeletePaymentModal(true);
+                          }}
+                          className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                          title="Eliminar"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -268,149 +375,133 @@ export function PaymentSection({
       )}
 
       {/* Payment Registration Modal */}
-      <Modal
+      <FormModal
         isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        title="Registrar Pago"
+        onClose={() => {
+          setShowPaymentModal(false);
+          setEditingPayment(null);
+          setPaymentFormError("");
+        }}
+        title={editingPayment ? "Editar Pago" : "Registrar Pago"}
         size="md"
-        footer={
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              form="payment-form"
-              className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600"
-            >
-              Confirmar Pago
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPaymentModal(false)}
-              className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
-          </div>
-        }
+        onSubmit={handleRecordPayment}
+        submitLabel={isSavingPayment ? "Guardando..." : "Confirmar Pago"}
+        loading={isSavingPayment}
+        error={paymentFormError}
       >
-        <form id="payment-form" onSubmit={handleRecordPayment} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Mes</label>
-              <input
-                type="month"
-                required
-                value={paymentFormData.month}
-                onChange={e => setPaymentFormData({ ...paymentFormData, month: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <CurrencyInput
-                label="Monto (Gs.)"
-                id="amount"
-                required
-                value={paymentFormData.amount}
-                onChange={value => setPaymentFormData({ ...paymentFormData, amount: value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                placeholder="0"
-              />
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha de Pago</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Mes</label>
             <input
-              type="date"
+              type="month"
               required
-              value={paymentFormData.paymentDate}
-              onChange={e => setPaymentFormData({ ...paymentFormData, paymentDate: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              disabled={!!editingPayment}
+              value={paymentFormData.month}
+              onChange={e => setPaymentFormData({ ...paymentFormData, month: e.target.value })}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Notas (opcional)</label>
-            <textarea
-              value={paymentFormData.notes}
-              onChange={e => setPaymentFormData({ ...paymentFormData, notes: e.target.value })}
-              rows={2}
+            <CurrencyInput
+              label="Monto (Gs.)"
+              id="amount"
+              required
+              value={paymentFormData.amount}
+              onChange={value => setPaymentFormData({ ...paymentFormData, amount: value })}
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Observaciones..."
+              placeholder="0"
             />
           </div>
-        </form>
-      </Modal>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha de Pago</label>
+          <input
+            type="date"
+            required
+            value={paymentFormData.paymentDate}
+            onChange={e => setPaymentFormData({ ...paymentFormData, paymentDate: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Notas (opcional)</label>
+          <textarea
+            value={paymentFormData.notes}
+            onChange={e => setPaymentFormData({ ...paymentFormData, notes: e.target.value })}
+            rows={2}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Observaciones..."
+          />
+        </div>
+      </FormModal>
 
       {/* Membership Plan Modal */}
-      <Modal
+      <FormModal
         isOpen={showPlanModal}
         onClose={() => setShowPlanModal(false)}
         title={membershipPlan ? "Editar Plan de Membresía" : "Configurar Plan de Membresía"}
         size="md"
-        footer={
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              form="plan-form"
-              className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-600"
-            >
-              Guardar Plan
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPlanModal(false)}
-              className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
-          </div>
-        }
+        onSubmit={handleUpdatePlan}
+        submitLabel="Guardar Plan"
       >
-        <form id="plan-form" onSubmit={handleUpdatePlan} className="space-y-4">
-          <div>
-            <CurrencyInput
-              label="Cuota Mensual (Gs.)"
-              required
-              value={planFormData.monthlyFee}
-              onChange={value => setPlanFormData({ ...planFormData, monthlyFee: value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Ej: 150.000"
-            />
-          </div>
+        <div>
+          <CurrencyInput
+            label="Cuota Mensual (Gs.)"
+            required
+            value={planFormData.monthlyFee}
+            onChange={value => setPlanFormData({ ...planFormData, monthlyFee: value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Ej: 150.000"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Frecuencia Semanal</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map(freq => (
-                <button
-                  key={freq}
-                  type="button"
-                  onClick={() => setPlanFormData({ ...planFormData, weeklyFrequency: freq })}
-                  className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
-                    planFormData.weeklyFrequency === freq
-                      ? "bg-orange-500 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {freq}x
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Entrenamientos de lunes a viernes, 1 hora por día</p>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Frecuencia Semanal</label>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map(freq => (
+              <button
+                key={freq}
+                type="button"
+                onClick={() => setPlanFormData({ ...planFormData, weeklyFrequency: freq })}
+                className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
+                  planFormData.weeklyFrequency === freq
+                    ? "bg-orange-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {freq}x
+              </button>
+            ))}
           </div>
+          <p className="text-xs text-gray-500 mt-1">Entrenamientos de lunes a viernes, 1 hora por día</p>
+        </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha de Inicio</label>
-            <input
-              type="date"
-              required
-              value={planFormData.startDate}
-              onChange={e => setPlanFormData({ ...planFormData, startDate: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
-        </form>
-      </Modal>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha de Inicio</label>
+          <input
+            type="date"
+            required
+            value={planFormData.startDate}
+            onChange={e => setPlanFormData({ ...planFormData, startDate: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          />
+        </div>
+      </FormModal>
+
+      <DeleteConfirmationModal
+        isOpen={showDeletePaymentModal}
+        onClose={() => {
+          setShowDeletePaymentModal(false);
+          setPaymentToDelete(null);
+        }}
+        onConfirm={handleDeletePayment}
+        title="Eliminar Pago"
+        message="¿Estás seguro que deseas eliminar este pago? Esta acción no se puede deshacer."
+        itemName={paymentToDelete ? formatShortMonth(paymentToDelete.month) : undefined}
+        loading={isDeletingPayment}
+      />
     </div>
   );
 }

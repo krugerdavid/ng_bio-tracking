@@ -1,143 +1,128 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "@core/container/DIContainer";
 import { Result } from "@core/types/Result";
-import type { Bioimpedance, CreateBioimpedanceDTO } from "@domain/bioimpedance/entities/Bioimpedance";
+import type {
+  Bioimpedance,
+  CreateBioimpedanceDTO,
+  UpdateBioimpedanceDTO,
+} from "@domain/bioimpedance/entities/Bioimpedance";
 import type { BioimpedanceRepository } from "@domain/bioimpedance/BioimpedanceRepository";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { HttpClient } from "@infrastructure/api/HttpClient";
+import { ApiError } from "@infrastructure/api/types";
+
+interface BioimpedanceApi {
+  id: string;
+  member_id: string;
+  date: string;
+  height: number;
+  weight: number;
+  imc: number;
+  body_fat_percentage: number;
+  muscle_mass_percentage: number;
+  kcal: number;
+  metabolic_age: number;
+  visceral_fat_percentage: number;
+  notes: string | null;
+  created_at: string;
+}
+
+function mapBioimpedanceApiToEntity(api: BioimpedanceApi): Bioimpedance {
+  return {
+    id: api.id,
+    memberId: api.member_id,
+    date: new Date(api.date),
+    height: Number(api.height),
+    weight: Number(api.weight),
+    imc: Number(api.imc),
+    bodyFatPercentage: Number(api.body_fat_percentage),
+    muscleMassPercentage: Number(api.muscle_mass_percentage),
+    kcal: Number(api.kcal),
+    metabolicAge: Number(api.metabolic_age),
+    visceralFatPercentage: Number(api.visceral_fat_percentage),
+    notes: api.notes ?? undefined,
+    createdAt: new Date(api.created_at),
+  };
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
 
 @injectable()
 export class BioimpedanceRepositoryImpl implements BioimpedanceRepository {
-  constructor(@inject(TYPES.SupabaseClient) private supabase: SupabaseClient) {}
+  constructor(@inject(TYPES.HttpClient) private readonly http: HttpClient) {}
 
   async create(data: CreateBioimpedanceDTO): Promise<Result<Bioimpedance>> {
     try {
-      const { data: bioimpedance, error } = await this.supabase
-        .from("bioimpedances")
-        .insert({
-          member_id: data.memberId,
-          date: this.formatDate(data.date),
-          height: data.height,
-          weight: data.weight,
-          imc: data.imc,
-          body_fat_percentage: data.bodyFatPercentage,
-          muscle_mass_percentage: data.muscleMassPercentage,
-          kcal: data.kcal,
-          metabolic_age: data.metabolicAge,
-          visceral_fat_percentage: data.visceralFatPercentage,
-          notes: data.notes,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return Result.error(`Error creating bioimpedance: ${error.message}`);
-      }
-
-      return Result.success(this.mapToBioimpedance(bioimpedance));
-    } catch (error) {
-      return Result.error(error instanceof Error ? error.message : "Unknown error creating bioimpedance");
+      const payload = await this.http.post<BioimpedanceApi>("/bioimpedances", {
+        member_id: data.memberId,
+        date: formatDate(data.date),
+        height: data.height,
+        weight: data.weight,
+        imc: data.imc,
+        body_fat_percentage: data.bodyFatPercentage,
+        muscle_mass_percentage: data.muscleMassPercentage,
+        kcal: data.kcal,
+        metabolic_age: data.metabolicAge,
+        visceral_fat_percentage: data.visceralFatPercentage,
+        notes: data.notes ?? null,
+      });
+      return Result.success(mapBioimpedanceApiToEntity(payload));
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error creating bioimpedance");
     }
   }
 
   async findById(id: string): Promise<Result<Bioimpedance | null>> {
     try {
-      const { data: bioimpedance, error } = await this.supabase.from("bioimpedances").select("*").eq("id", id).single();
-
-      if (error) {
-        if (error.code === "PGRST116") {
-          return Result.success(null);
-        }
-        return Result.error(`Error finding bioimpedance: ${error.message}`);
+      const payload = await this.http.get<BioimpedanceApi>(`/bioimpedances/${id}`);
+      return Result.success(mapBioimpedanceApiToEntity(payload));
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return Result.success(null);
       }
-
-      return Result.success(bioimpedance ? this.mapToBioimpedance(bioimpedance) : null);
-    } catch (error) {
-      return Result.error(error instanceof Error ? error.message : "Unknown error finding bioimpedance");
+      return Result.error(err instanceof ApiError ? err.message : "Error finding bioimpedance");
     }
   }
 
   async findByMemberId(memberId: string): Promise<Result<Bioimpedance[]>> {
     try {
-      const { data: bioimpedances, error } = await this.supabase
-        .from("bioimpedances")
-        .select("*")
-        .eq("member_id", memberId)
-        .order("date", { ascending: false });
+      const payload = await this.http.get<BioimpedanceApi[] | { data: BioimpedanceApi[] }>(
+        `/members/${memberId}/bioimpedance`
+      );
+      const list = Array.isArray(payload) ? payload : (payload.data ?? []);
+      return Result.success(list.map(mapBioimpedanceApiToEntity));
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching bioimpedances");
+    }
+  }
 
-      if (error) {
-        return Result.error(`Error fetching bioimpedances: ${error.message}`);
-      }
-
-      return Result.success(bioimpedances.map(b => this.mapToBioimpedance(b)));
-    } catch (error) {
-      return Result.error(error instanceof Error ? error.message : "Unknown error fetching bioimpedances");
+  async update(id: string, data: UpdateBioimpedanceDTO): Promise<Result<Bioimpedance>> {
+    try {
+      const body: Record<string, unknown> = {};
+      if (data.date !== undefined) body.date = formatDate(data.date);
+      if (data.height !== undefined) body.height = data.height;
+      if (data.weight !== undefined) body.weight = data.weight;
+      if (data.imc !== undefined) body.imc = data.imc;
+      if (data.bodyFatPercentage !== undefined) body.body_fat_percentage = data.bodyFatPercentage;
+      if (data.muscleMassPercentage !== undefined) body.muscle_mass_percentage = data.muscleMassPercentage;
+      if (data.kcal !== undefined) body.kcal = data.kcal;
+      if (data.metabolicAge !== undefined) body.metabolic_age = data.metabolicAge;
+      if (data.visceralFatPercentage !== undefined) body.visceral_fat_percentage = data.visceralFatPercentage;
+      if (data.notes !== undefined) body.notes = data.notes;
+      const payload = await this.http.put<BioimpedanceApi>(`/bioimpedances/${id}`, body);
+      return Result.success(mapBioimpedanceApiToEntity(payload));
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error updating bioimpedance");
     }
   }
 
   async delete(id: string): Promise<Result<void>> {
     try {
-      const { error } = await this.supabase.from("bioimpedances").delete().eq("id", id);
-
-      if (error) {
-        return Result.error(`Error deleting bioimpedance: ${error.message}`);
-      }
-
+      await this.http.delete(`/bioimpedances/${id}`);
       return Result.success(undefined);
-    } catch (error) {
-      return Result.error(error instanceof Error ? error.message : "Unknown error deleting bioimpedance");
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error deleting bioimpedance");
     }
-  }
-
-  private mapToBioimpedance(data: {
-    id: string;
-    member_id: string;
-    date: string;
-    height: number | string;
-    weight: number | string;
-    imc: number | string;
-    body_fat_percentage: number | string;
-    muscle_mass_percentage: number | string;
-    kcal: number | string;
-    metabolic_age: number | string;
-    visceral_fat_percentage: number | string;
-    notes: string | null;
-    created_at: string;
-  }): Bioimpedance {
-    return {
-      id: data.id,
-      memberId: data.member_id,
-      date: this.parseDateString(data.date),
-      height: parseFloat(String(data.height)),
-      weight: parseFloat(String(data.weight)),
-      imc: parseFloat(String(data.imc)),
-      bodyFatPercentage: parseFloat(String(data.body_fat_percentage)),
-      muscleMassPercentage: parseFloat(String(data.muscle_mass_percentage)),
-      kcal: parseFloat(String(data.kcal)),
-      metabolicAge: parseFloat(String(data.metabolic_age)),
-      visceralFatPercentage: parseFloat(String(data.visceral_fat_percentage)),
-      notes: data.notes ?? undefined,
-      createdAt: new Date(data.created_at),
-    };
-  }
-
-  /**
-   * Parse a date string (YYYY-MM-DD) as a local date, not UTC.
-   * This prevents timezone issues where dates can shift by one day.
-   */
-  private parseDateString(dateString: string): Date {
-    // If the date string is in format YYYY-MM-DD, parse it as local date
-    const parts = dateString.split("-");
-    if (parts.length === 3) {
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-      const day = parseInt(parts[2], 10);
-      return new Date(year, month, day);
-    }
-    // Fallback to standard Date parsing for other formats
-    return new Date(dateString);
-  }
-
-  private formatDate(date: Date): string {
-    return date.toISOString().split("T")[0];
   }
 }
