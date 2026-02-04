@@ -118,25 +118,83 @@ export function MemberListPage({
           <p className="text-gray-500 mb-6">Intenta con otra búsqueda o registra un nuevo deportista</p>
         </div>
       ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <ul role="list" className="divide-y divide-gray-100 dark:divide-gray-800">
+        <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden">
+          {/* Mobile: card list */}
+          <ul role="list" className="md:hidden divide-y divide-gray-100">
             {members.map(member => (
-              <li
-                key={member.id}
-                onClick={() => navigate(`/member/${member.id}`)}
-                className={`flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5 px-6 sm:flex-nowrap hover:bg-gray-50 transition-colors duration-150 cursor-pointer ${
-                  member.status === "moroso" ? "bg-red-50 hover:bg-red-100" : ""
-                }`}
-              >
-                <div className="flex gap-x-4 items-center min-w-0">
-                  <div className="h-12 w-12 flex-none rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-xl">
-                    {member.name.charAt(0).toUpperCase()}
+              <li key={member.id}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/member/${member.id}`)}
+                  className={`w-full text-left block p-4 active:bg-gray-50 transition-colors ${
+                    member.status === "moroso" ? "bg-red-50/50 active:bg-red-100/50" : "hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-11 w-11 shrink-0 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg">
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 truncate">{member.name}</p>
+                      <p className="text-sm text-gray-600 truncate mt-0.5">
+                        {member.email || "Sin email"} · Doc. {member.documentNumber}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`inline-flex text-xs font-semibold rounded-full px-2 py-0.5 ${
+                            member.status === "active"
+                              ? "bg-green-100 text-green-800"
+                              : member.status === "moroso"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {member.status === "active" ? "Al día" : member.status === "moroso" ? "Moroso" : "Inactivo"}
+                        </span>
+                        <span className="text-xs text-gray-500">{member.frequency}</span>
+                        <span className="text-xs text-gray-500">{member.age} años</span>
+                      </div>
+                    </div>
+                    <span className="text-orange-600 text-sm font-medium shrink-0 pt-0.5">Ver →</span>
                   </div>
-                  <div className="min-w-0 flex-auto">
-                    <p className="text-sm font-semibold leading-6 text-gray-900">
-                      {member.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frecuencia</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Edad</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                  <th className="px-4 py-3 w-20" />
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {members.map(member => (
+                  <tr
+                    key={member.id}
+                    onClick={() => navigate(`/member/${member.id}`)}
+                    className={`cursor-pointer hover:bg-gray-50 transition-colors ${
+                      member.status === "moroso" ? "bg-red-50/50 hover:bg-red-100/50" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{member.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 truncate max-w-[180px]">
+                      {member.email || "Sin email"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{member.documentNumber}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{member.frequency}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{member.age} años</td>
+                    <td className="px-4 py-3">
                       <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        className={`inline-flex text-xs font-semibold rounded-full px-2 py-1 ${
                           member.status === "active"
                             ? "bg-green-100 text-green-800"
                             : member.status === "moroso"
@@ -146,28 +204,15 @@ export function MemberListPage({
                       >
                         {member.status === "active" ? "Al día" : member.status === "moroso" ? "Moroso" : "Inactivo"}
                       </span>
-                    </p>
-                    <div className="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
-                      <p className="truncate">{member.email || "Sin email"}</p>
-                      <svg viewBox="0 0 2 2" className="h-0.5 w-0.5 fill-current">
-                        <circle r={1} cx={1} cy={1} />
-                      </svg>
-                      <p className="whitespace-nowrap">{member.documentNumber}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-auto items-center justify-between sm:justify-end gap-x-6 sm:w-auto w-full">
-                    <div className="flex flex-col items-end gap-y-1">
-                      <p className="text-sm leading-6 text-gray-900">{member.frequency}</p>
-                      <div className="flex items-center gap-x-2">
-                        <p className="text-xs leading-5 text-gray-500">{member.age} años</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-orange-600 text-sm font-medium">Ver</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

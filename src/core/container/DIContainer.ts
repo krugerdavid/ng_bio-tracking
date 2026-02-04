@@ -75,4 +75,7 @@ export const TYPES = {
   // Audit (root only)
   AuditLogRepository: Symbol.for("AuditLogRepository"),
   ListAuditLogsUseCase: Symbol.for("ListAuditLogsUseCase"),
+
+  // Dashboard (admin/root)
+  GetDashboardUseCase: Symbol.for("GetDashboardUseCase"),
 } as const;

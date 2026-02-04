@@ -18,6 +18,7 @@ const UserManagementPageController = lazy(
 );
 
 const AuditLogPageController = lazy(() => import("@presentation/features/audit/pages/AuditLogPageController"));
+const DashboardPageController = lazy(() => import("@presentation/features/dashboard/pages/DashboardPageController"));
 
 // Routes configuration - similar to merchant-web
 export const routesConfig = [
@@ -35,7 +36,7 @@ export const routesConfig = [
             path: "/",
             element: (
               <Suspense fallback={<PageLoader />}>
-                <MemberListPageController />
+                <DashboardPageController />
               </Suspense>
             ),
           },

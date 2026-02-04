@@ -11,7 +11,7 @@ import { FormModal } from "../../../shared/components/FormModal";
 import { Tabs } from "../../../shared/components/Tabs";
 import { PageLoader } from "../../../shared/components/PageLoader";
 import { DeleteConfirmationModal } from "../../../shared/components/DeleteConfirmationModal";
-import { formatWithThousandsSeparator } from "../../../shared/utils/formatters";
+import { formatWithThousandsSeparator, formatCurrency, formatLocalDate } from "../../../shared/utils/formatters";
 
 interface MemberDetailPageProps {
   details: MemberDetails | null;
@@ -35,14 +35,6 @@ interface MemberDetailPageProps {
   onUpdatePayment: (id: string, data: UpdatePaymentDTO) => Promise<void>;
   onDeletePayment: (id: string) => Promise<void>;
 }
-
-// Helper function to format dates correctly in local timezone
-const formatLocalDate = (date: Date | string, options?: Intl.DateTimeFormatOptions): string => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  // Adjust for timezone offset to get local date
-  const localDate = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
-  return localDate.toLocaleDateString("es-ES", options);
-};
 
 // Helper function to compare values and return indicator
 const getTrendIndicator = (current: number, previous: number | null): { icon: string; color: string } | null => {
@@ -232,15 +224,7 @@ export function MemberDetailPage({
 
   const latestBioimpedance = bioimpedanceRecords.length > 0 ? bioimpedanceRecords[0] : null;
   const previousBioimpedance = bioimpedanceRecords.length > 1 ? bioimpedanceRecords[1] : null;
-  const historicalRecords = bioimpedanceRecords.slice(1);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-PY", {
-      style: "currency",
-      currency: "PYG",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const historicalRecords = bioimpedanceRecords;
 
   return (
     <div className="container mx-auto">
@@ -528,9 +512,111 @@ export function MemberDetailPage({
 
           {/* Historical Bioimpedance Records */}
           {historicalRecords.length > 0 && (
-            <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Historial de Registros</h3>
-              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 p-4 sm:p-6 pb-0">Historial de Registros</h3>
+
+              {/* Mobile: card list */}
+              <ul className="md:hidden divide-y divide-gray-100 p-4 sm:p-6 pt-4">
+                {historicalRecords.map(record => (
+                  <li key={record.id} className="py-4 first:pt-0">
+                    <div className="border border-gray-200 rounded-xl p-4 shadow-sm">
+                      <div className="flex justify-between items-start gap-3 mb-3">
+                        <p className="font-semibold text-gray-900">{formatLocalDate(record.date)}</p>
+                        <div className="flex gap-2 shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditingBioimpedance({ id: record.id, date: record.date });
+                              setFormData({
+                                date: new Date(record.date).toISOString().split("T")[0],
+                                height: record.height.toString(),
+                                weight: record.weight.toString(),
+                                imc: record.imc.toString(),
+                                bodyFatPercentage: record.bodyFatPercentage.toString(),
+                                muscleMassPercentage: record.muscleMassPercentage.toString(),
+                                kcal: record.kcal.toString(),
+                                metabolicAge: record.metabolicAge.toString(),
+                                visceralFatPercentage: record.visceralFatPercentage.toString(),
+                                notes: record.notes || "",
+                              });
+                              setShowBioModal(true);
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar"
+                            aria-label="Editar"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setBioimpedanceToDelete({ id: record.id, date: formatLocalDate(record.date) });
+                              setShowDeleteBioModal(true);
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar"
+                            aria-label="Eliminar"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Peso</span>
+                          <p className="font-medium text-gray-900">{record.weight} kg</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">IMC</span>
+                          <p className="font-medium text-gray-900">{record.imc}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">% Grasa</span>
+                          <p className="font-medium text-gray-900">{record.bodyFatPercentage}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">% Músculo</span>
+                          <p className="font-medium text-gray-900">{record.muscleMassPercentage}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Kcal</span>
+                          <p className="font-medium text-gray-900">{record.kcal}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Edad met.</span>
+                          <p className="font-medium text-gray-900">{record.metabolicAge}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">% Visceral</span>
+                          <p className="font-medium text-gray-900">{record.visceralFatPercentage}</p>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <span className="text-gray-500">Estatura</span>
+                          <p className="font-medium text-gray-900">{record.height} cm</p>
+                        </div>
+                      </div>
+                      {record.notes && (
+                        <p className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600">{record.notes}</p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Desktop: table */}
+              <div className="hidden md:block overflow-x-auto p-4 sm:p-6 pt-4">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>

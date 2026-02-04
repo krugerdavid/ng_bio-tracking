@@ -9,6 +9,7 @@ export interface MemberRepository {
     limit?: number;
     search?: string;
   }): Promise<Result<{ members: Member[]; total: number }>>;
+  findLatest(limit: number): Promise<Result<Member[]>>;
   update(id: string, data: UpdateMemberDTO): Promise<Result<Member>>;
   delete(id: string): Promise<Result<void>>;
 }

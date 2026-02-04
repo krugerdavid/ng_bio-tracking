@@ -5,6 +5,7 @@ import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaym
 import { FormModal } from "../../../shared/components/FormModal";
 import { CurrencyInput } from "../../../shared/components/CurrencyInput";
 import { DeleteConfirmationModal } from "../../../shared/components/DeleteConfirmationModal";
+import { formatCurrency, formatShortMonth } from "@presentation/shared/utils/formatters";
 
 interface PaymentSectionProps {
   memberId: string;
@@ -138,22 +139,6 @@ export function PaymentSection({
       </div>
     );
   }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-PY", {
-      style: "currency",
-      currency: "PYG",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatShortMonth = (monthStr: string) => {
-    const [year, month] = monthStr.split("-");
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    // Format: "AGO 2024"
-    const shortMonth = date.toLocaleDateString("es-ES", { month: "short" }).toUpperCase().replace(".", "");
-    return `${shortMonth} ${year}`;
-  };
 
   return (
     <div className="space-y-6">

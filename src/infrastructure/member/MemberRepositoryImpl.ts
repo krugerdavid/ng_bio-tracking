@@ -94,6 +94,19 @@ export class MemberRepositoryImpl implements MemberRepository {
     }
   }
 
+  async findLatest(limit: number): Promise<Result<Member[]>> {
+    try {
+      const params: Record<string, unknown> = { page: 1, page_size: Math.max(limit, 200) };
+      const payload = await this.http.get<MembersIndexPayload>("/members", params);
+      const list = Array.isArray(payload.data) ? payload.data : [];
+      const members = list.map(mapMemberApiToMember);
+      members.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      return Result.success(members.slice(0, limit));
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching latest members");
+    }
+  }
+
   async update(id: string, data: UpdateMemberDTO): Promise<Result<Member>> {
     try {
       const body: Record<string, unknown> = {};

@@ -61,6 +61,7 @@ import { UpdateMembershipPlanUseCase } from "@application/payment/use-cases/Upda
 import { GetMembershipPlanUseCase } from "@application/payment/use-cases/GetMembershipPlanUseCase";
 import { AuditLogRepositoryImpl } from "@infrastructure/audit/AuditLogRepositoryImpl";
 import { ListAuditLogsUseCase } from "@application/audit/use-cases/ListAuditLogsUseCase";
+import { GetDashboardUseCase } from "@application/dashboard/use-cases/GetDashboardUseCase";
 
 // Infrastructure - API client (Axios + Laravel response; session via token in localStorage)
 container
@@ -137,5 +138,7 @@ container.bind(TYPES.UpdateMembershipPlanUseCase).to(UpdateMembershipPlanUseCase
 container.bind(TYPES.GetMembershipPlanUseCase).to(GetMembershipPlanUseCase).inSingletonScope();
 
 container.bind(TYPES.ListAuditLogsUseCase).to(ListAuditLogsUseCase).inSingletonScope();
+
+container.bind(TYPES.GetDashboardUseCase).to(GetDashboardUseCase).inSingletonScope();
 
 export { container };

@@ -102,6 +102,19 @@ export class PaymentRepositoryImpl implements PaymentRepository {
     return Result.success(all);
   }
 
+  async findLatest(limit: number): Promise<Result<Payment[]>> {
+    try {
+      const payload = await this.http.get<PaymentApi[] | { data: PaymentApi[] }>("/payments", {
+        page: 1,
+        per_page: limit,
+      });
+      const list = Array.isArray(payload) ? payload : (payload.data ?? []);
+      return Result.success(list.slice(0, limit).map(mapPaymentApiToEntity));
+    } catch {
+      return Result.success([]);
+    }
+  }
+
   async findByMonth(month: string): Promise<Result<Payment[]>> {
     void month; // API does not expose global payments by month
     return Result.success([]);
