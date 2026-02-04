@@ -30,6 +30,7 @@ describe("CreateUserUseCase", () => {
       const mockCreatedUser: UserProfile = {
         id: "123",
         userId: "user-456",
+        name: "",
         email: userData.email,
         role: userData.role,
         createdBy: null,
@@ -91,6 +92,7 @@ describe("CreateUserUseCase", () => {
       const mockAdminUser: UserProfile = {
         id: "789",
         userId: "admin-999",
+        name: "",
         email: adminData.email,
         role: Role.ADMIN,
         createdBy: null,

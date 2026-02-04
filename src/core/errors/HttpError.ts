@@ -25,35 +25,6 @@ export class HttpError extends DomainError {
     this.data = details.data;
   }
 
-  static fromSupabaseError(error: unknown): HttpError {
-    // Type guard for Supabase-like error structure
-    const supabaseError = error as {
-      status?: number;
-      statusText?: string;
-      message?: string;
-      code?: string;
-      details?: string;
-    };
-
-    const status = supabaseError.status || 0;
-    const statusText = supabaseError.statusText || "Unknown Error";
-    const url = "supabase";
-    const method = "UNKNOWN";
-    const message = supabaseError.message || supabaseError.details || "Unknown error";
-
-    return new HttpError(
-      message,
-      {
-        status,
-        statusText,
-        url,
-        method,
-        data: supabaseError,
-      },
-      error instanceof Error ? error : undefined
-    );
-  }
-
   /**
    * Get technical details for debugging purposes
    */

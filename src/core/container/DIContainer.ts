@@ -61,6 +61,7 @@ export const TYPES = {
   // Use Cases - Admin
   CreateUserUseCase: Symbol.for("CreateUserUseCase"),
   ListUsersUseCase: Symbol.for("ListUsersUseCase"),
+  UpdateUserUseCase: Symbol.for("UpdateUserUseCase"),
   DeleteUserUseCase: Symbol.for("DeleteUserUseCase"),
 
   // Use Cases - Payment
@@ -70,4 +71,8 @@ export const TYPES = {
   GetPaymentStatusUseCase: Symbol.for("GetPaymentStatusUseCase"),
   UpdateMembershipPlanUseCase: Symbol.for("UpdateMembershipPlanUseCase"),
   GetMembershipPlanUseCase: Symbol.for("GetMembershipPlanUseCase"),
+
+  // Audit (root only)
+  AuditLogRepository: Symbol.for("AuditLogRepository"),
+  ListAuditLogsUseCase: Symbol.for("ListAuditLogsUseCase"),
 } as const;

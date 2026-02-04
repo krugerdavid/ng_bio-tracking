@@ -49,6 +49,7 @@ import { GetCurrentUserUseCase } from "@application/auth/use-cases/GetCurrentUse
 // Use Cases - Admin
 import { CreateUserUseCase } from "@application/admin/use-cases/CreateUserUseCase";
 import { ListUsersUseCase } from "@application/admin/use-cases/ListUsersUseCase";
+import { UpdateUserUseCase } from "@application/admin/use-cases/UpdateUserUseCase";
 import { DeleteUserUseCase } from "@application/admin/use-cases/DeleteUserUseCase";
 
 // Use Cases - Payment
@@ -58,6 +59,8 @@ import { DeletePaymentUseCase } from "@application/payment/use-cases/DeletePayme
 import { GetPaymentStatusUseCase } from "@application/payment/use-cases/GetPaymentStatusUseCase";
 import { UpdateMembershipPlanUseCase } from "@application/payment/use-cases/UpdateMembershipPlanUseCase";
 import { GetMembershipPlanUseCase } from "@application/payment/use-cases/GetMembershipPlanUseCase";
+import { AuditLogRepositoryImpl } from "@infrastructure/audit/AuditLogRepositoryImpl";
+import { ListAuditLogsUseCase } from "@application/audit/use-cases/ListAuditLogsUseCase";
 
 // Infrastructure - API client (Axios + Laravel response; session via token in localStorage)
 container
@@ -78,6 +81,8 @@ container.bind(TYPES.UserProfileRepository).to(UserProfileRepositoryImpl).inSing
 container.bind(TYPES.PaymentRepository).to(PaymentRepositoryImpl).inSingletonScope();
 
 container.bind(TYPES.MembershipPlanRepository).to(MembershipPlanRepositoryImpl).inSingletonScope();
+
+container.bind(TYPES.AuditLogRepository).to(AuditLogRepositoryImpl).inSingletonScope();
 
 // Domain Services
 container.bind(TYPES.MemberDomainService).to(MemberDomainService).inSingletonScope();
@@ -116,6 +121,8 @@ container.bind(TYPES.CreateUserUseCase).to(CreateUserUseCase).inSingletonScope()
 
 container.bind(TYPES.ListUsersUseCase).to(ListUsersUseCase).inSingletonScope();
 
+container.bind(TYPES.UpdateUserUseCase).to(UpdateUserUseCase).inSingletonScope();
+
 container.bind(TYPES.DeleteUserUseCase).to(DeleteUserUseCase).inSingletonScope();
 
 // Use Cases - Payment
@@ -128,5 +135,7 @@ container.bind(TYPES.GetPaymentStatusUseCase).to(GetPaymentStatusUseCase).inSing
 container.bind(TYPES.UpdateMembershipPlanUseCase).to(UpdateMembershipPlanUseCase).inSingletonScope();
 
 container.bind(TYPES.GetMembershipPlanUseCase).to(GetMembershipPlanUseCase).inSingletonScope();
+
+container.bind(TYPES.ListAuditLogsUseCase).to(ListAuditLogsUseCase).inSingletonScope();
 
 export { container };

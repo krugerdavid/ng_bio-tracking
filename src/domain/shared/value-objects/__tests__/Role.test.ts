@@ -1,7 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { Role, isAdmin, isUser } from "../Role";
+import { Role, isRoot, isAdmin, isUser } from "../Role";
 
 describe("Role Value Object", () => {
+  describe("isRoot", () => {
+    it("should return true for root role", () => {
+      expect(isRoot(Role.ROOT)).toBe(true);
+    });
+
+    it("should return false for admin and user role", () => {
+      expect(isRoot(Role.ADMIN)).toBe(false);
+      expect(isRoot(Role.USER)).toBe(false);
+    });
+  });
+
   describe("isAdmin", () => {
     it("should return true for admin role", () => {
       expect(isAdmin(Role.ADMIN)).toBe(true);
@@ -24,6 +35,7 @@ describe("Role Value Object", () => {
 
   describe("Role constants", () => {
     it("should have correct string values", () => {
+      expect(Role.ROOT).toBe("root");
       expect(Role.ADMIN).toBe("admin");
       expect(Role.USER).toBe("user");
     });
