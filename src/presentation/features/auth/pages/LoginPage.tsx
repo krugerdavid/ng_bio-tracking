@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@presentation/shared/hooks/useAuth";
+import { PasswordInput } from "@presentation/shared/components/PasswordInput";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -63,22 +64,17 @@ export default function LoginPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                id="password"
-                required
-                autoComplete="current-password"
-                value={formData.password}
-                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 sm:py-3.5 text-base rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-                placeholder="••••••••"
-                disabled={isLoading}
-              />
-            </div>
+            <PasswordInput
+              id="password"
+              label="Contraseña"
+              value={formData.password}
+              onChange={password => setFormData(prev => ({ ...prev, password }))}
+              placeholder="••••••••"
+              disabled={isLoading}
+              required
+              autoComplete="current-password"
+              inputClassName="text-base py-3 sm:py-3.5"
+            />
 
             <button
               type="submit"

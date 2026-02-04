@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef, useTransition } from "react";
 import { useAuth } from "@presentation/shared/hooks/useAuth";
-import { isAdmin } from "@domain/shared/value-objects/Role";
+import { isAdmin, isRoot } from "@domain/shared/value-objects/Role";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
 
 export default function AppLayout() {
@@ -104,7 +104,7 @@ export default function AppLayout() {
                 >
                   Miembros
                 </Link>
-                {user && isAdmin(user.role) && (
+                {user && (isAdmin(user.role) || isRoot(user.role)) && (
                   <Link
                     to="/users"
                     onClick={e => handleNavClick(e, "/users")}
@@ -115,6 +115,19 @@ export default function AppLayout() {
                     }`}
                   >
                     Usuarios
+                  </Link>
+                )}
+                {user && isRoot(user.role) && (
+                  <Link
+                    to="/audit-logs"
+                    onClick={e => handleNavClick(e, "/audit-logs")}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                      location.pathname === "/audit-logs"
+                        ? "bg-orange-500 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    Auditoría
                   </Link>
                 )}
               </div>
@@ -231,7 +244,7 @@ export default function AppLayout() {
           >
             Miembros
           </Link>
-          {user && isAdmin(user.role) && (
+          {user && (isAdmin(user.role) || isRoot(user.role)) && (
             <Link
               to="/users"
               onClick={e => handleNavClick(e, "/users")}
@@ -242,6 +255,19 @@ export default function AppLayout() {
               }`}
             >
               Usuarios
+            </Link>
+          )}
+          {user && isRoot(user.role) && (
+            <Link
+              to="/audit-logs"
+              onClick={e => handleNavClick(e, "/audit-logs")}
+              className={`block px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+                location.pathname === "/audit-logs"
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              }`}
+            >
+              Auditoría
             </Link>
           )}
         </nav>

@@ -23,10 +23,11 @@ interface UserApi {
 }
 
 function mapUserApiToUser(api: UserApi): User {
+  const role = api.role === "member" ? "user" : (api.role as Role);
   return {
     id: api.id,
     email: api.email,
-    role: (api.role as Role) ?? "user",
+    role: role ?? "user",
     createdAt: new Date(api.created_at),
   };
 }

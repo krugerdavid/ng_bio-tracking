@@ -2,7 +2,9 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import AppLayout from "./AppLayout";
 import { PrivateRoute } from "./PrivateRoute";
+import { RequireRoleRoute } from "./RequireRoleRoute";
 import LoginPage from "@presentation/features/auth/pages/LoginPage";
+import { Role } from "@domain/shared/value-objects/Role";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
 
 // Lazy load page controllers to avoid loading all data on login
@@ -14,6 +16,8 @@ const MemberDetailPageController = lazy(
 const UserManagementPageController = lazy(
   () => import("@presentation/features/admin/pages/UserManagementPageController")
 );
+
+const AuditLogPageController = lazy(() => import("@presentation/features/audit/pages/AuditLogPageController"));
 
 // Routes configuration - similar to merchant-web
 export const routesConfig = [
@@ -54,9 +58,21 @@ export const routesConfig = [
           {
             path: "/users",
             element: (
-              <Suspense fallback={<PageLoader />}>
-                <UserManagementPageController />
-              </Suspense>
+              <RequireRoleRoute allowedRoles={[Role.ADMIN, Role.ROOT]}>
+                <Suspense fallback={<PageLoader />}>
+                  <UserManagementPageController />
+                </Suspense>
+              </RequireRoleRoute>
+            ),
+          },
+          {
+            path: "/audit-logs",
+            element: (
+              <RequireRoleRoute allowedRoles={[Role.ROOT]}>
+                <Suspense fallback={<PageLoader />}>
+                  <AuditLogPageController />
+                </Suspense>
+              </RequireRoleRoute>
             ),
           },
         ],
