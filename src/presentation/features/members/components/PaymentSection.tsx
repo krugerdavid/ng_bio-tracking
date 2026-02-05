@@ -5,6 +5,7 @@ import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaym
 import { FormModal } from "../../../shared/components/FormModal";
 import { CurrencyInput } from "../../../shared/components/CurrencyInput";
 import { DeleteConfirmationModal } from "../../../shared/components/DeleteConfirmationModal";
+import { formatCurrency, formatShortMonth } from "@presentation/shared/utils/formatters";
 
 interface PaymentSectionProps {
   memberId: string;
@@ -131,6 +132,16 @@ export function PaymentSection({
     setShowPlanModal(false);
   };
 
+  const amountNum = parseFloat(paymentFormData.amount);
+  const paymentExcess =
+    !editingPayment &&
+    paymentStatus &&
+    paymentStatus.totalDebt > 0 &&
+    !Number.isNaN(amountNum) &&
+    amountNum > paymentStatus.totalDebt
+      ? amountNum - paymentStatus.totalDebt
+      : 0;
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-32">
@@ -138,22 +149,6 @@ export function PaymentSection({
       </div>
     );
   }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-PY", {
-      style: "currency",
-      currency: "PYG",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatShortMonth = (monthStr: string) => {
-    const [year, month] = monthStr.split("-");
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    // Format: "AGO 2024"
-    const shortMonth = date.toLocaleDateString("es-ES", { month: "short" }).toUpperCase().replace(".", "");
-    return `${shortMonth} ${year}`;
-  };
 
   return (
     <div className="space-y-6">
@@ -411,6 +406,42 @@ export function PaymentSection({
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               placeholder="0"
             />
+            {membershipPlan && (
+              <div className="mt-2 space-y-1">
+                {!editingPayment && paymentStatus && paymentStatus.totalDebt > 0 && (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      Deuda actual:{" "}
+                      <span className="font-semibold text-gray-900">{formatCurrency(paymentStatus.totalDebt)}</span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPaymentFormData({
+                          ...paymentFormData,
+                          amount: paymentStatus.totalDebt.toString(),
+                        })
+                      }
+                      className="text-xs font-medium text-orange-600 hover:text-orange-700"
+                    >
+                      Usar deuda actual
+                    </button>
+                  </>
+                )}
+                {!editingPayment && (!paymentStatus || paymentStatus.totalDebt === 0) && (
+                  <p className="text-sm text-gray-500">Cuota sugerida: {formatCurrency(membershipPlan.monthlyFee)}</p>
+                )}
+                {editingPayment && (
+                  <p className="text-sm text-gray-500">Cuota del plan: {formatCurrency(membershipPlan.monthlyFee)}</p>
+                )}
+                {paymentExcess > 0 && (
+                  <p className="text-sm text-green-700 mt-1">
+                    El excedente ({formatCurrency(paymentExcess)}) quedará a favor del deportista y se aplicará a
+                    futuros pagos.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

@@ -82,17 +82,19 @@ export default function AppLayout() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
               <div className="flex space-x-2">
-                <Link
-                  to="/"
-                  onClick={e => handleNavClick(e, "/")}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                    location.pathname === "/"
-                      ? "bg-orange-500 text-white shadow-md"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                >
-                  Inicio
-                </Link>
+                {user && (isAdmin(user.role) || isRoot(user.role)) && (
+                  <Link
+                    to="/"
+                    onClick={e => handleNavClick(e, "/")}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                      location.pathname === "/"
+                        ? "bg-orange-500 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <Link
                   to="/members"
                   onClick={e => handleNavClick(e, "/members")}
@@ -139,7 +141,7 @@ export default function AppLayout() {
                     className="flex items-center space-x-2 px-4 py-2 bg-white transition-all duration-300 focus:outline-none hover:cursor-pointer"
                   >
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-linear-to-br from-orange-400 to-orange-600 flex items-center justify-center">
                         <span className="text-white text-sm font-semibold">{user.email.charAt(0).toUpperCase()}</span>
                       </div>
                       <span className="text-sm font-medium text-gray-700 hidden lg:block">{user.email}</span>

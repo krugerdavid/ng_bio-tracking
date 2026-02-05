@@ -2,7 +2,7 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "@core/container/DIContainer";
 import { Result } from "@core/types/Result";
 import { Member, type CreateMemberDTO, type UpdateMemberDTO } from "@domain/member/entities/Member";
-import type { MemberRepository } from "@domain/member/MemberRepository";
+import type { MemberRepository, DebtSummary } from "@domain/member/MemberRepository";
 import type { HttpClient } from "@infrastructure/api/HttpClient";
 import { ApiError } from "@infrastructure/api/types";
 
@@ -94,6 +94,19 @@ export class MemberRepositoryImpl implements MemberRepository {
     }
   }
 
+  async findLatest(limit: number): Promise<Result<Member[]>> {
+    try {
+      const params: Record<string, unknown> = { page: 1, page_size: Math.max(limit, 200) };
+      const payload = await this.http.get<MembersIndexPayload>("/members", params);
+      const list = Array.isArray(payload.data) ? payload.data : [];
+      const members = list.map(mapMemberApiToMember);
+      members.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      return Result.success(members.slice(0, limit));
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching latest members");
+    }
+  }
+
   async update(id: string, data: UpdateMemberDTO): Promise<Result<Member>> {
     try {
       const body: Record<string, unknown> = {};
@@ -116,5 +129,44 @@ export class MemberRepositoryImpl implements MemberRepository {
     } catch (err) {
       return Result.error(err instanceof ApiError ? err.message : "Error deleting member");
     }
+  }
+
+  async getDebtSummary(memberId: string): Promise<Result<DebtSummary | null>> {
+    try {
+      const payload = await this.http.get<{
+        monthly_fee: number;
+        owed_months: string[];
+        total_debt: number;
+        credit_balance: number;
+        total_debt_after_credit: number;
+      }>(`/members/${memberId}/debt`);
+      return Result.success({
+        monthlyFee: Number(payload.monthly_fee),
+        owedMonths: Array.isArray(payload.owed_months) ? payload.owed_months : [],
+        totalDebt: Number(payload.total_debt),
+        creditBalance: Number(payload.credit_balance),
+        totalDebtAfterCredit: Number(payload.total_debt_after_credit),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return Result.success(null);
+      }
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching debt summary");
+    }
+  }
+
+  async getDebtSummaries(memberIds: string[]): Promise<Result<Map<string, DebtSummary>>> {
+    if (memberIds.length === 0) {
+      return Result.success(new Map());
+    }
+    const results = await Promise.all(memberIds.map(id => this.getDebtSummary(id)));
+    const map = new Map<string, DebtSummary>();
+    for (let i = 0; i < memberIds.length; i++) {
+      const r = results[i];
+      if (r.isSuccess() && r.getValue() !== null) {
+        map.set(memberIds[i], r.getValue()!);
+      }
+    }
+    return Result.success(map);
   }
 }

@@ -3,6 +3,7 @@ import { TYPES } from "@core/container/DIContainer";
 import { Result } from "@core/types/Result";
 import type { PaymentRepository } from "@domain/payment/PaymentRepository";
 import type { MembershipPlanRepository } from "@domain/payment/MembershipPlanRepository";
+import type { MemberRepository } from "@domain/member/MemberRepository";
 import { PaymentDomainService } from "@domain/payment/PaymentDomainService";
 import type { Payment } from "@domain/payment/entities/Payment";
 
@@ -19,33 +20,42 @@ export class GetPaymentStatusUseCase {
     @inject(TYPES.PaymentRepository)
     private paymentRepository: PaymentRepository,
     @inject(TYPES.MembershipPlanRepository)
-    private membershipPlanRepository: MembershipPlanRepository
+    private membershipPlanRepository: MembershipPlanRepository,
+    @inject(TYPES.MemberRepository)
+    private memberRepository: MemberRepository
   ) {}
 
   async execute(memberId: string): Promise<Result<PaymentStatusResult>> {
     try {
-      // Get member's payments
-      const paymentsResult = await this.paymentRepository.findByMemberId(memberId);
-      if (paymentsResult.isError()) {
-        return Result.error(paymentsResult.getError());
-      }
+      const [paymentsResult, planResult, debtResult] = await Promise.all([
+        this.paymentRepository.findByMemberId(memberId),
+        this.membershipPlanRepository.findByMemberId(memberId),
+        this.memberRepository.getDebtSummary(memberId),
+      ]);
+
+      if (paymentsResult.isError()) return Result.error(paymentsResult.getError());
+      if (planResult.isError()) return Result.error(planResult.getError());
 
       const payments = paymentsResult.getValue();
-
-      // Get member's membership plan
-      const planResult = await this.membershipPlanRepository.findByMemberId(memberId);
-      if (planResult.isError()) {
-        return Result.error(planResult.getError());
-      }
-
       const plan = planResult.getValue();
 
-      // Calculate overdue months
+      // Prefer backend debt summary (includes credit_balance / total_debt_after_credit)
+      const debt = debtResult.isSuccess() ? debtResult.getValue() : null;
+      if (debt !== null) {
+        const totalDebt = debt.totalDebtAfterCredit;
+        const isOverdue = totalDebt > 0;
+        const overdueMonths = isOverdue ? debt.owedMonths : [];
+        return Result.success({
+          payments,
+          overdueMonths,
+          isOverdue,
+          totalDebt,
+        });
+      }
+
+      // Fallback: compute from plan + payments (no credit_balance)
       const overdueMonths = PaymentDomainService.getOverdueMonths(plan, payments);
-
-      // Calculate total debt (sum of overdue months * monthly fee)
       const totalDebt = plan && overdueMonths.length > 0 ? overdueMonths.length * plan.monthlyFee : 0;
-
       return Result.success({
         payments,
         overdueMonths,
