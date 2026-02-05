@@ -15,7 +15,7 @@ interface LoginResponse {
 }
 
 interface UserApi {
-  id: string;
+  id: number | string;
   name?: string;
   email: string;
   role: string;
@@ -25,7 +25,7 @@ interface UserApi {
 function mapUserApiToUser(api: UserApi): User {
   const role = api.role === "member" ? "user" : (api.role as Role);
   return {
-    id: api.id,
+    id: String(api.id),
     email: api.email,
     role: role ?? "user",
     createdAt: new Date(api.created_at),

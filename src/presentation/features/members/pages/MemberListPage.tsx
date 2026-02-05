@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { MemberListItemDTO } from "@application/member/dtos/MemberListItemDTO";
 import { RegisterMemberModal } from "../components/RegisterMemberModal";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
+import { formatCurrency } from "@presentation/shared/utils/formatters";
 
 interface MemberListPageProps {
   members: MemberListItemDTO[];
@@ -149,7 +150,11 @@ export function MemberListPage({
                                 : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {member.status === "active" ? "Al día" : member.status === "moroso" ? "Moroso" : "Inactivo"}
+                          {member.status === "active"
+                            ? "Al día"
+                            : member.status === "moroso"
+                              ? `Mora: ${formatCurrency(member.debtAmount)}`
+                              : "Inactivo"}
                         </span>
                         <span className="text-xs text-gray-500">{member.frequency}</span>
                         <span className="text-xs text-gray-500">{member.age} años</span>
@@ -202,7 +207,11 @@ export function MemberListPage({
                               : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {member.status === "active" ? "Al día" : member.status === "moroso" ? "Moroso" : "Inactivo"}
+                        {member.status === "active"
+                          ? "Al día"
+                          : member.status === "moroso"
+                            ? `Mora: ${formatCurrency(member.debtAmount)}`
+                            : "Inactivo"}
                       </span>
                     </td>
                     <td className="px-4 py-3">

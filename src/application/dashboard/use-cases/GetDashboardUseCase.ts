@@ -3,7 +3,6 @@ import { Result } from "@core/types/Result";
 import type { MemberRepository } from "@domain/member/MemberRepository";
 import type { MembershipPlanRepository } from "@domain/payment/MembershipPlanRepository";
 import type { PaymentRepository } from "@domain/payment/PaymentRepository";
-import { PaymentDomainService } from "@domain/payment/PaymentDomainService";
 import { TYPES } from "@core/container/DIContainer";
 import type {
   DashboardResult,
@@ -36,20 +35,16 @@ export class GetDashboardUseCase {
     const { members, total: totalMembers } = membersResult.getValue();
     const memberIds = members.map(m => m.id);
 
-    const [plansResult, paymentsResult] = await Promise.all([
+    // Fetch all plans and debt summaries in parallel
+    const [plansResult, debtsResult] = await Promise.all([
       this.membershipPlanRepository.findAllByMemberIds(memberIds),
-      this.paymentRepository.findAllByMemberIds(memberIds),
+      this.memberRepository.getDebtSummaries(memberIds),
     ]);
 
     const allPlans = plansResult.isSuccess() ? plansResult.getValue() : [];
-    const allPayments = paymentsResult.isSuccess() ? paymentsResult.getValue() : [];
+    const debtsMap = debtsResult.isSuccess() ? debtsResult.getValue() : new Map();
 
     const plansMap = new Map(allPlans.map(p => [p.memberId, p]));
-    const paymentsMap = new Map<string, typeof allPayments>();
-    allPayments.forEach(p => {
-      if (!paymentsMap.has(p.memberId)) paymentsMap.set(p.memberId, []);
-      paymentsMap.get(p.memberId)!.push(p);
-    });
 
     let inArrearsCount = 0;
     let totalAmountInArrears = 0;
@@ -57,8 +52,7 @@ export class GetDashboardUseCase {
 
     for (const member of members) {
       const plan = plansMap.get(member.id);
-      const payments = paymentsMap.get(member.id) ?? [];
-      const overdueMonths = PaymentDomainService.getOverdueMonths(plan ?? null, payments);
+      const debt = debtsMap.get(member.id);
 
       if (plan?.isActive) {
         const label = `${plan.weeklyFrequency}x/semana`;
@@ -68,9 +62,10 @@ export class GetDashboardUseCase {
         frequencyCounts.set(label, (frequencyCounts.get(label) ?? 0) + 1);
       }
 
-      if (overdueMonths.length > 0 && plan) {
+      // Use backend debt summary (considers credit_balance)
+      if (debt && debt.totalDebtAfterCredit > 0) {
         inArrearsCount += 1;
-        totalAmountInArrears += overdueMonths.length * plan.monthlyFee;
+        totalAmountInArrears += debt.totalDebtAfterCredit;
       }
     }
 
