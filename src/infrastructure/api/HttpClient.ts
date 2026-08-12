@@ -35,13 +35,13 @@ export class HttpClient {
   }
 
   /**
-   * Execute request and return unwrapped data. Catches AxiosError and throws ApiError with Laravel message.
+   * Execute request and return unwrapped data (+ Laravel message). Catches AxiosError and throws ApiError.
    */
   async request<T>(
     method: "get" | "post" | "put" | "delete",
     url: string,
     options?: { params?: Record<string, unknown>; data?: unknown }
-  ): Promise<{ data: T; status: number }> {
+  ): Promise<{ data: T; status: number; message?: string }> {
     try {
       let raw: LaravelApiResponse<T>;
       if (method === "get") {
@@ -53,18 +53,14 @@ export class HttpClient {
       } else {
         raw = await this.apiClient.delete<LaravelApiResponse<T>>(url);
       }
-      const data = this.unwrap(raw);
-      return { data, status: 200 };
+      if (raw.status === "error") {
+        throw new ApiError(raw.message, 400, raw.errors);
+      }
+      return { data: raw.data as T, status: 200, message: raw.message };
     } catch (err) {
+      if (err instanceof ApiError) throw err;
       throw this.toApiError(err);
     }
-  }
-
-  private unwrap<T>(raw: LaravelApiResponse<T>): T {
-    if (raw.status === "error") {
-      throw new ApiError(raw.message, 400, raw.errors);
-    }
-    return raw.data as T;
   }
 
   private toApiError(err: unknown): ApiError {
@@ -73,6 +69,15 @@ export class HttpClient {
       const body = axiosError.response.data as LaravelApiResponse;
       if (body.status === "error") {
         return new ApiError(body.message, axiosError.response.status ?? 500, body.errors);
+      }
+      // Laravel validation (422) without status:error wrapper
+      if (axiosError.response.status === 422 && "errors" in body) {
+        const errors = (body as { errors?: Record<string, string[]>; message?: string }).errors;
+        const message =
+          (body as { message?: string }).message ??
+          (errors ? Object.values(errors).flat()[0] : undefined) ??
+          "Validación fallida";
+        return new ApiError(message, 422, errors);
       }
     }
     return new ApiError(

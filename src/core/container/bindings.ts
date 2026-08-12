@@ -35,6 +35,7 @@ import { ListMembersUseCase } from "@application/member/use-cases/ListMembersUse
 import { GetMemberDetailsUseCase } from "@application/member/use-cases/GetMemberDetailsUseCase";
 import { UpdateMemberUseCase } from "@application/member/use-cases/UpdateMemberUseCase";
 import { DeleteMemberUseCase } from "@application/member/use-cases/DeleteMemberUseCase";
+import { InviteMemberUseCase } from "@application/member/use-cases/InviteMemberUseCase";
 
 // Use Cases - Bioimpedance
 import { RecordBioimpedanceUseCase } from "@application/bioimpedance/use-cases/RecordBioimpedanceUseCase";
@@ -45,6 +46,7 @@ import { DeleteBioimpedanceUseCase } from "@application/bioimpedance/use-cases/D
 import { LoginUseCase } from "@application/auth/use-cases/LoginUseCase";
 import { LogoutUseCase } from "@application/auth/use-cases/LogoutUseCase";
 import { GetCurrentUserUseCase } from "@application/auth/use-cases/GetCurrentUserUseCase";
+import { AcceptInviteUseCase } from "@application/auth/use-cases/AcceptInviteUseCase";
 
 // Use Cases - Admin
 import { CreateUserUseCase } from "@application/admin/use-cases/CreateUserUseCase";
@@ -104,6 +106,7 @@ container.bind(TYPES.GetMemberDetailsUseCase).to(GetMemberDetailsUseCase).inSing
 container.bind(TYPES.UpdateMemberUseCase).to(UpdateMemberUseCase).inSingletonScope();
 
 container.bind(TYPES.DeleteMemberUseCase).to(DeleteMemberUseCase).inSingletonScope();
+container.bind(TYPES.InviteMemberUseCase).to(InviteMemberUseCase).inSingletonScope();
 
 // Use Cases - Bioimpedance
 container.bind(TYPES.RecordBioimpedanceUseCase).to(RecordBioimpedanceUseCase).inSingletonScope();
@@ -116,6 +119,7 @@ container.bind(TYPES.LoginUseCase).to(LoginUseCase).inSingletonScope();
 container.bind(TYPES.LogoutUseCase).to(LogoutUseCase).inSingletonScope();
 
 container.bind(TYPES.GetCurrentUserUseCase).to(GetCurrentUserUseCase).inSingletonScope();
+container.bind(TYPES.AcceptInviteUseCase).to(AcceptInviteUseCase).inSingletonScope();
 
 // Use Cases - Admin
 container.bind(TYPES.CreateUserUseCase).to(CreateUserUseCase).inSingletonScope();

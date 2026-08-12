@@ -47,6 +47,7 @@ export const TYPES = {
   GetMemberDetailsUseCase: Symbol.for("GetMemberDetailsUseCase"),
   UpdateMemberUseCase: Symbol.for("UpdateMemberUseCase"),
   DeleteMemberUseCase: Symbol.for("DeleteMemberUseCase"),
+  InviteMemberUseCase: Symbol.for("InviteMemberUseCase"),
 
   // Use Cases - Bioimpedance
   RecordBioimpedanceUseCase: Symbol.for("RecordBioimpedanceUseCase"),
@@ -57,6 +58,7 @@ export const TYPES = {
   LoginUseCase: Symbol.for("LoginUseCase"),
   LogoutUseCase: Symbol.for("LogoutUseCase"),
   GetCurrentUserUseCase: Symbol.for("GetCurrentUserUseCase"),
+  AcceptInviteUseCase: Symbol.for("AcceptInviteUseCase"),
 
   // Use Cases - Admin
   CreateUserUseCase: Symbol.for("CreateUserUseCase"),

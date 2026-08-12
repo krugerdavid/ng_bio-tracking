@@ -4,6 +4,7 @@ import AppLayout from "./AppLayout";
 import { PrivateRoute } from "./PrivateRoute";
 import { RequireRoleRoute } from "./RequireRoleRoute";
 import LoginPage from "@presentation/features/auth/pages/LoginPage";
+import AcceptInvitePage from "@presentation/features/auth/pages/AcceptInvitePage";
 import { Role } from "@domain/shared/value-objects/Role";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
 
@@ -25,6 +26,10 @@ export const routesConfig = [
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/accept-invite",
+    element: <AcceptInvitePage />,
   },
   {
     element: <PrivateRoute />,

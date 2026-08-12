@@ -22,6 +22,7 @@ import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import { MemberDetailPage } from "./MemberDetailPage";
 
 import type { DeleteMemberUseCase } from "@application/member/use-cases/DeleteMemberUseCase";
+import type { InviteMemberUseCase } from "@application/member/use-cases/InviteMemberUseCase";
 
 export default function MemberDetailPageController() {
   const { memberId } = useParams<{ memberId: string }>();
@@ -44,6 +45,7 @@ export default function MemberDetailPageController() {
   const getMembershipPlanUseCase = container.get<GetMembershipPlanUseCase>(TYPES.GetMembershipPlanUseCase);
   const updateMembershipPlanUseCase = container.get<UpdateMembershipPlanUseCase>(TYPES.UpdateMembershipPlanUseCase);
   const deleteMemberUseCase = container.get<DeleteMemberUseCase>(TYPES.DeleteMemberUseCase);
+  const inviteMemberUseCase = container.get<InviteMemberUseCase>(TYPES.InviteMemberUseCase);
 
   const fetchPaymentData = async () => {
     if (!memberId) return;
@@ -145,6 +147,16 @@ export default function MemberDetailPageController() {
     }
   };
 
+  const handleInviteMember = async (email?: string) => {
+    if (!memberId) return;
+
+    const result = await inviteMemberUseCase.execute(memberId, email);
+    if (result.isError()) {
+      throw new Error(result.getError());
+    }
+    await fetchDetails();
+  };
+
   const handleUpdateBioimpedance = async (id: string, data: UpdateBioimpedanceDTO) => {
     const result = await updateBioimpedanceUseCase.execute(id, data);
 
@@ -202,6 +214,7 @@ export default function MemberDetailPageController() {
       onUpdatePlan={handleUpdatePlan}
       onUpdateMember={handleUpdateMember}
       onDeleteMember={handleDeleteMember}
+      onInviteMember={handleInviteMember}
       onUpdateBioimpedance={handleUpdateBioimpedance}
       onDeleteBioimpedance={handleDeleteBioimpedance}
       onUpdatePayment={handleUpdatePayment}

@@ -23,4 +23,6 @@ export interface MemberRepository {
   delete(id: string): Promise<Result<void>>;
   getDebtSummary(memberId: string): Promise<Result<DebtSummary | null>>;
   getDebtSummaries(memberIds: string[]): Promise<Result<Map<string, DebtSummary>>>;
+  /** Invite or resend app access email. Pass email when member has none. */
+  invite(id: string, email?: string): Promise<Result<{ member: Member; message: string }>>;
 }

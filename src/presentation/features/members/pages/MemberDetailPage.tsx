@@ -7,6 +7,7 @@ import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaymentStatusUseCase";
 import { PaymentSection } from "../components/PaymentSection";
 import { UpdateMemberModal } from "../components/UpdateMemberModal";
+import { InviteMemberModal } from "../components/InviteMemberModal";
 import { FormModal } from "../../../shared/components/FormModal";
 import { Tabs } from "../../../shared/components/Tabs";
 import { PageLoader } from "../../../shared/components/PageLoader";
@@ -30,6 +31,7 @@ interface MemberDetailPageProps {
   }) => Promise<void>;
   onUpdateMember: () => Promise<void>;
   onDeleteMember: () => Promise<void>;
+  onInviteMember: (email?: string) => Promise<void>;
   onUpdateBioimpedance: (id: string, data: UpdateBioimpedanceDTO) => Promise<void>;
   onDeleteBioimpedance: (id: string) => Promise<void>;
   onUpdatePayment: (id: string, data: UpdatePaymentDTO) => Promise<void>;
@@ -93,6 +95,7 @@ export function MemberDetailPage({
   onUpdatePlan,
   onUpdateMember,
   onDeleteMember,
+  onInviteMember,
   onUpdateBioimpedance,
   onDeleteBioimpedance,
   onUpdatePayment,
@@ -102,6 +105,8 @@ export function MemberDetailPage({
   const [showBioModal, setShowBioModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteFeedback, setInviteFeedback] = useState<string>("");
   const [showDeleteBioModal, setShowDeleteBioModal] = useState(false);
   const [editingBioimpedance, setEditingBioimpedance] = useState<{ id: string; date: Date } | null>(null);
   const [bioimpedanceToDelete, setBioimpedanceToDelete] = useState<{ id: string; date: string } | null>(null);
@@ -248,6 +253,23 @@ export function MemberDetailPage({
               <h1 className="text-3xl font-bold text-gray-900">{member.name}</h1>
               <div className="flex items-center gap-1">
                 <button
+                  onClick={() => {
+                    setInviteFeedback("");
+                    setShowInviteModal(true);
+                  }}
+                  className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-full transition-all duration-200"
+                  title={member.userId ? "Reenviar acceso a la app" : "Dar acceso a la app"}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+                <button
                   onClick={() => setShowEditModal(true)}
                   className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-full transition-all duration-200"
                   title="Editar información"
@@ -278,8 +300,18 @@ export function MemberDetailPage({
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-2 truncate">
-              {formatWithThousandsSeparator(member.documentNumber)} &middot; {member.email}
+              {formatWithThousandsSeparator(member.documentNumber)} &middot; {member.email || "Sin email"}
             </p>
+            {member.userId ? (
+              <p className="text-xs text-green-700 mb-2 font-medium">Acceso a la app: activo</p>
+            ) : (
+              <p className="text-xs text-amber-700 mb-2 font-medium">Acceso a la app: sin invitar</p>
+            )}
+            {inviteFeedback && (
+              <p className="text-xs text-green-700 mb-2 bg-green-50 border border-green-100 rounded-md px-2 py-1">
+                {inviteFeedback}
+              </p>
+            )}
             <div className="flex items-center space-x-4 text-xs text-gray-500">
               <span className="flex items-center">
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -914,6 +946,19 @@ export function MemberDetailPage({
         onClose={() => setShowEditModal(false)}
         onSuccess={onUpdateMember}
         member={details.member}
+      />
+
+      <InviteMemberModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        memberName={member.name}
+        defaultEmail={member.email}
+        onInvite={async email => {
+          await onInviteMember(email);
+          setInviteFeedback(
+            member.userId ? "Invitación reenviada correctamente." : "Invitación enviada correctamente."
+          );
+        }}
       />
 
       <DeleteConfirmationModal

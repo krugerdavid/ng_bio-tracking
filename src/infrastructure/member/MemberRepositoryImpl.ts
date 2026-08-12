@@ -33,7 +33,9 @@ function mapMemberApiToMember(api: MemberApi): Member {
     (api.gender as "male" | "female" | "other") ?? undefined,
     new Date(api.created_at),
     new Date(api.updated_at),
-    api.user_id ?? undefined
+    api.user_id !== null && api.user_id !== undefined && api.user_id !== ""
+      ? String(api.user_id)
+      : undefined
   );
 }
 
@@ -168,5 +170,22 @@ export class MemberRepositoryImpl implements MemberRepository {
       }
     }
     return Result.success(map);
+  }
+
+  async invite(id: string, email?: string): Promise<Result<{ member: Member; message: string }>> {
+    try {
+      const body = email?.trim() ? { email: email.trim() } : {};
+      const res = await this.http.request<MemberApi>("post", `/members/${id}/invite`, { data: body });
+      return Result.success({
+        member: mapMemberApiToMember(res.data),
+        message: res.message ?? "Invitación enviada.",
+      });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const emailErr = err.errors?.email?.[0];
+        return Result.error(emailErr ?? err.message);
+      }
+      return Result.error("Error al enviar la invitación");
+    }
   }
 }
