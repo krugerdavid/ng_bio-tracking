@@ -14,16 +14,21 @@ interface BioimpedanceApi {
   id: string;
   member_id: string;
   date: string;
-  height: number;
+  height: number | null;
   weight: number;
-  imc: number;
-  body_fat_percentage: number;
-  muscle_mass_percentage: number;
-  kcal: number;
-  metabolic_age: number;
-  visceral_fat_percentage: number;
+  imc: number | null;
+  body_fat_percentage: number | null;
+  muscle_mass_percentage: number | null;
+  kcal: number | null;
+  metabolic_age: number | null;
+  visceral_fat_percentage: number | null;
   notes: string | null;
+  status?: "pending" | "confirmed" | null;
   created_at: string;
+}
+
+function toOptionalNumber(value: number | null): number | undefined {
+  return value === null || value === undefined ? undefined : Number(value);
 }
 
 function mapBioimpedanceApiToEntity(api: BioimpedanceApi): Bioimpedance {
@@ -31,15 +36,16 @@ function mapBioimpedanceApiToEntity(api: BioimpedanceApi): Bioimpedance {
     id: api.id,
     memberId: api.member_id,
     date: new Date(api.date),
-    height: Number(api.height),
     weight: Number(api.weight),
-    imc: Number(api.imc),
-    bodyFatPercentage: Number(api.body_fat_percentage),
-    muscleMassPercentage: Number(api.muscle_mass_percentage),
-    kcal: Number(api.kcal),
-    metabolicAge: Number(api.metabolic_age),
-    visceralFatPercentage: Number(api.visceral_fat_percentage),
+    height: toOptionalNumber(api.height),
+    imc: toOptionalNumber(api.imc),
+    bodyFatPercentage: toOptionalNumber(api.body_fat_percentage),
+    muscleMassPercentage: toOptionalNumber(api.muscle_mass_percentage),
+    kcal: toOptionalNumber(api.kcal),
+    metabolicAge: toOptionalNumber(api.metabolic_age),
+    visceralFatPercentage: toOptionalNumber(api.visceral_fat_percentage),
     notes: api.notes ?? undefined,
+    status: api.status ?? undefined,
     createdAt: new Date(api.created_at),
   };
 }
@@ -110,6 +116,7 @@ export class BioimpedanceRepositoryImpl implements BioimpedanceRepository {
       if (data.metabolicAge !== undefined) body.metabolic_age = data.metabolicAge;
       if (data.visceralFatPercentage !== undefined) body.visceral_fat_percentage = data.visceralFatPercentage;
       if (data.notes !== undefined) body.notes = data.notes;
+      if (data.status !== undefined) body.status = data.status;
       const payload = await this.http.put<BioimpedanceApi>(`/bioimpedances/${id}`, body);
       return Result.success(mapBioimpedanceApiToEntity(payload));
     } catch (err) {

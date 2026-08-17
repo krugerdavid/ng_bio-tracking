@@ -39,8 +39,11 @@ interface MemberDetailPageProps {
 }
 
 // Helper function to compare values and return indicator
-const getTrendIndicator = (current: number, previous: number | null): { icon: string; color: string } | null => {
-  if (previous === null) return null;
+const getTrendIndicator = (
+  current: number | undefined,
+  previous: number | null | undefined
+): { icon: string; color: string } | null => {
+  if (current === undefined || previous === null || previous === undefined) return null;
 
   const diff = current - previous;
   if (Math.abs(diff) < 0.01) return null; // Ignore very small differences
@@ -61,8 +64,8 @@ const MetricCard = ({
   trend,
 }: {
   label: string;
-  value: number;
-  previousValue: number | null;
+  value: number | undefined;
+  previousValue: number | null | undefined;
   unit: string;
   trend: { icon: string; color: string } | null;
 }) => (
@@ -72,7 +75,7 @@ const MetricCard = ({
     </div>
     <div className="flex flex-col items-start justify-between mb-1">
       <p className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-        {value} {unit}{" "}
+        {value ?? "—"} {value !== undefined ? unit : ""}{" "}
         {trend && (
           <span className={`text-md ${trend.color} font-bold`} title={trend.icon === "▲" ? "Aumentó" : "Disminuyó"}>
             {trend.icon}
@@ -163,6 +166,7 @@ export function MemberDetailPage({
           metabolicAge,
           visceralFatPercentage,
           notes: formData.notes || undefined,
+          status: "confirmed",
         };
         await onUpdateBioimpedance(editingBioimpedance.id, updateData);
       } else {
@@ -214,6 +218,18 @@ export function MemberDetailPage({
       console.error("Error deleting bioimpedance:", error);
     } finally {
       setIsDeletingBio(false);
+    }
+  };
+
+  const [confirmingBioId, setConfirmingBioId] = useState<string | null>(null);
+  const handleConfirmBioimpedance = async (id: string) => {
+    setConfirmingBioId(id);
+    try {
+      await onUpdateBioimpedance(id, { status: "confirmed" });
+    } catch (error) {
+      console.error("Error confirming bioimpedance:", error);
+    } finally {
+      setConfirmingBioId(null);
     }
   };
 
@@ -429,7 +445,14 @@ export function MemberDetailPage({
             <div className="mb-8 bg-white rounded-2xl shadow-sm border-gray-200 p-4 sm:p-6">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800">Últimos Valores</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-gray-800">Últimos Valores</h3>
+                    {latestBioimpedance.status === "pending" && (
+                      <span className="inline-flex text-xs font-semibold rounded-full px-2 py-0.5 bg-amber-100 text-amber-800">
+                        Pendiente
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500 mt-1">
                     {formatLocalDate(latestBioimpedance.date, {
                       year: "numeric",
@@ -438,28 +461,39 @@ export function MemberDetailPage({
                     })}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setBioFormError("");
-                    setEditingBioimpedance({ id: latestBioimpedance.id, date: latestBioimpedance.date });
-                    setFormData({
-                      date: new Date(latestBioimpedance.date).toISOString().split("T")[0],
-                      height: latestBioimpedance.height.toString(),
-                      weight: latestBioimpedance.weight.toString(),
-                      imc: latestBioimpedance.imc.toString(),
-                      bodyFatPercentage: latestBioimpedance.bodyFatPercentage.toString(),
-                      muscleMassPercentage: latestBioimpedance.muscleMassPercentage.toString(),
-                      kcal: latestBioimpedance.kcal.toString(),
-                      metabolicAge: latestBioimpedance.metabolicAge.toString(),
-                      visceralFatPercentage: latestBioimpedance.visceralFatPercentage.toString(),
-                      notes: latestBioimpedance.notes ?? "",
-                    });
-                    setShowBioModal(true);
-                  }}
-                  className="text-orange-500 hover:text-orange-600 font-semibold"
-                >
-                  Editar
-                </button>
+                <div className="flex items-center gap-4">
+                  {latestBioimpedance.status === "pending" && (
+                    <button
+                      onClick={() => handleConfirmBioimpedance(latestBioimpedance.id)}
+                      disabled={confirmingBioId === latestBioimpedance.id}
+                      className="text-sm px-3 py-1.5 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 disabled:opacity-50"
+                    >
+                      {confirmingBioId === latestBioimpedance.id ? "Confirmando…" : "Confirmar"}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setBioFormError("");
+                      setEditingBioimpedance({ id: latestBioimpedance.id, date: latestBioimpedance.date });
+                      setFormData({
+                        date: new Date(latestBioimpedance.date).toISOString().split("T")[0],
+                        height: latestBioimpedance.height?.toString() ?? "",
+                        weight: latestBioimpedance.weight.toString(),
+                        imc: latestBioimpedance.imc?.toString() ?? "",
+                        bodyFatPercentage: latestBioimpedance.bodyFatPercentage?.toString() ?? "",
+                        muscleMassPercentage: latestBioimpedance.muscleMassPercentage?.toString() ?? "",
+                        kcal: latestBioimpedance.kcal?.toString() ?? "",
+                        metabolicAge: latestBioimpedance.metabolicAge?.toString() ?? "",
+                        visceralFatPercentage: latestBioimpedance.visceralFatPercentage?.toString() ?? "",
+                        notes: latestBioimpedance.notes ?? "",
+                      });
+                      setShowBioModal(true);
+                    }}
+                    className="text-orange-500 hover:text-orange-600 font-semibold"
+                  >
+                    Editar
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -553,21 +587,37 @@ export function MemberDetailPage({
                   <li key={record.id} className="py-4 first:pt-0">
                     <div className="border border-gray-200 rounded-xl p-4 shadow-sm">
                       <div className="flex justify-between items-start gap-3 mb-3">
-                        <p className="font-semibold text-gray-900">{formatLocalDate(record.date)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900">{formatLocalDate(record.date)}</p>
+                          {record.status === "pending" && (
+                            <span className="inline-flex text-xs font-semibold rounded-full px-2 py-0.5 bg-amber-100 text-amber-800">
+                              Pendiente
+                            </span>
+                          )}
+                        </div>
                         <div className="flex gap-2 shrink-0">
+                          {record.status === "pending" && (
+                            <button
+                              onClick={() => handleConfirmBioimpedance(record.id)}
+                              disabled={confirmingBioId === record.id}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50"
+                            >
+                              {confirmingBioId === record.id ? "Confirmando…" : "Confirmar"}
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setEditingBioimpedance({ id: record.id, date: record.date });
                               setFormData({
                                 date: new Date(record.date).toISOString().split("T")[0],
-                                height: record.height.toString(),
+                                height: record.height?.toString() ?? "",
                                 weight: record.weight.toString(),
-                                imc: record.imc.toString(),
-                                bodyFatPercentage: record.bodyFatPercentage.toString(),
-                                muscleMassPercentage: record.muscleMassPercentage.toString(),
-                                kcal: record.kcal.toString(),
-                                metabolicAge: record.metabolicAge.toString(),
-                                visceralFatPercentage: record.visceralFatPercentage.toString(),
+                                imc: record.imc?.toString() ?? "",
+                                bodyFatPercentage: record.bodyFatPercentage?.toString() ?? "",
+                                muscleMassPercentage: record.muscleMassPercentage?.toString() ?? "",
+                                kcal: record.kcal?.toString() ?? "",
+                                metabolicAge: record.metabolicAge?.toString() ?? "",
+                                visceralFatPercentage: record.visceralFatPercentage?.toString() ?? "",
                                 notes: record.notes || "",
                               });
                               setShowBioModal(true);
@@ -716,6 +766,12 @@ export function MemberDetailPage({
                         scope="col"
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
+                        Estado
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Acciones
                       </th>
                     </tr>
@@ -726,36 +782,66 @@ export function MemberDetailPage({
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {formatLocalDate(record.date)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.height}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.height ?? "—"}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.weight}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.imc}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.imc ?? "—"}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {record.bodyFatPercentage}
+                          {record.bodyFatPercentage ?? "—"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {record.muscleMassPercentage}
+                          {record.muscleMassPercentage ?? "—"}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.kcal}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.metabolicAge}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.kcal ?? "—"}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {record.visceralFatPercentage}
+                          {record.metabolicAge ?? "—"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {record.visceralFatPercentage ?? "—"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.notes || "-"}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {record.status === "pending" ? (
+                            <span className="inline-flex text-xs font-semibold rounded-full px-2 py-1 bg-amber-100 text-amber-800">
+                              Pendiente
+                            </span>
+                          ) : (
+                            <span className="inline-flex text-xs font-semibold rounded-full px-2 py-1 bg-green-100 text-green-800">
+                              Confirmado
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex gap-2">
+                            {record.status === "pending" && (
+                              <button
+                                onClick={() => handleConfirmBioimpedance(record.id)}
+                                disabled={confirmingBioId === record.id}
+                                className="p-1.5 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded transition-colors disabled:opacity-50"
+                                title="Confirmar"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              </button>
+                            )}
                             <button
                               onClick={() => {
                                 setEditingBioimpedance({ id: record.id, date: record.date });
                                 setFormData({
                                   date: new Date(record.date).toISOString().split("T")[0],
-                                  height: record.height.toString(),
+                                  height: record.height?.toString() ?? "",
                                   weight: record.weight.toString(),
-                                  imc: record.imc.toString(),
-                                  bodyFatPercentage: record.bodyFatPercentage.toString(),
-                                  muscleMassPercentage: record.muscleMassPercentage.toString(),
-                                  kcal: record.kcal.toString(),
-                                  metabolicAge: record.metabolicAge.toString(),
-                                  visceralFatPercentage: record.visceralFatPercentage.toString(),
+                                  imc: record.imc?.toString() ?? "",
+                                  bodyFatPercentage: record.bodyFatPercentage?.toString() ?? "",
+                                  muscleMassPercentage: record.muscleMassPercentage?.toString() ?? "",
+                                  kcal: record.kcal?.toString() ?? "",
+                                  metabolicAge: record.metabolicAge?.toString() ?? "",
+                                  visceralFatPercentage: record.visceralFatPercentage?.toString() ?? "",
                                   notes: record.notes || "",
                                 });
                                 setShowBioModal(true);

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { container } from "@core/container/bindings";
 import { TYPES } from "@core/container/DIContainer";
 import type { GetMyMemberUseCase } from "@application/member/use-cases/GetMyMemberUseCase";
+import type { RecordBioimpedanceUseCase } from "@application/bioimpedance/use-cases/RecordBioimpedanceUseCase";
 import type {
   GetPaymentStatusUseCase,
   PaymentStatusResult,
@@ -23,42 +24,53 @@ export default function MemberHomePageController() {
 
   const getMyMemberUseCase = container.get<GetMyMemberUseCase>(TYPES.GetMyMemberUseCase);
   const getPaymentStatusUseCase = container.get<GetPaymentStatusUseCase>(TYPES.GetPaymentStatusUseCase);
+  const recordBioimpedanceUseCase = container.get<RecordBioimpedanceUseCase>(TYPES.RecordBioimpedanceUseCase);
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
 
-    async function load() {
-      setLoading(true);
-      setError("");
+    const detailsResult = await getMyMemberUseCase.execute(memberId);
 
-      const detailsResult = await getMyMemberUseCase.execute(memberId);
-      if (cancelled) return;
-
-      if (detailsResult.isError()) {
-        setError(detailsResult.getError());
-        setLoading(false);
-        return;
-      }
-
-      const { member, bioimpedances } = detailsResult.getValue();
-      setMember(member);
-      setBioimpedances(bioimpedances);
-
-      const paymentResult = await getPaymentStatusUseCase.execute(member.id);
-      if (cancelled) return;
-      if (paymentResult.isSuccess()) {
-        setPaymentStatus(paymentResult.getValue());
-      }
-
+    if (detailsResult.isError()) {
+      setError(detailsResult.getError());
       setLoading(false);
+      return;
     }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
+    const { member, bioimpedances } = detailsResult.getValue();
+    setMember(member);
+    setBioimpedances(bioimpedances);
+
+    const paymentResult = await getPaymentStatusUseCase.execute(member.id);
+    if (paymentResult.isSuccess()) {
+      setPaymentStatus(paymentResult.getValue());
+    }
+
+    setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleRegisterWeight = async (data: { date: Date; weight: number; notes?: string }) => {
+    if (!member) return;
+
+    const result = await recordBioimpedanceUseCase.execute({
+      memberId: member.id,
+      date: data.date,
+      weight: data.weight,
+      notes: data.notes,
+    });
+
+    if (result.isError()) {
+      throw new Error(result.getError());
+    }
+
+    await load();
+  };
 
   return (
     <MemberHomePage
@@ -67,6 +79,7 @@ export default function MemberHomePageController() {
       paymentStatus={paymentStatus}
       loading={loading}
       error={error}
+      onRegisterWeight={handleRegisterWeight}
     />
   );
 }

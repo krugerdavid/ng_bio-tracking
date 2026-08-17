@@ -61,15 +61,21 @@ export class BioimpedanceDomainService {
     previous: Bioimpedance
   ): {
     weightChange: number;
-    bodyFatChange: number;
-    muscleMassChange: number;
-    imcChange: number;
+    bodyFatChange: number | undefined;
+    muscleMassChange: number | undefined;
+    imcChange: number | undefined;
   } {
     return {
       weightChange: current.weight - previous.weight,
-      bodyFatChange: current.bodyFatPercentage - previous.bodyFatPercentage,
-      muscleMassChange: current.muscleMassPercentage - previous.muscleMassPercentage,
-      imcChange: current.imc - previous.imc,
+      bodyFatChange:
+        current.bodyFatPercentage !== undefined && previous.bodyFatPercentage !== undefined
+          ? current.bodyFatPercentage - previous.bodyFatPercentage
+          : undefined,
+      muscleMassChange:
+        current.muscleMassPercentage !== undefined && previous.muscleMassPercentage !== undefined
+          ? current.muscleMassPercentage - previous.muscleMassPercentage
+          : undefined,
+      imcChange: current.imc !== undefined && previous.imc !== undefined ? current.imc - previous.imc : undefined,
     };
   }
 }
