@@ -1,7 +1,12 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "@core/container/DIContainer";
 import { Result } from "@core/types/Result";
-import { Member, type CreateMemberDTO, type UpdateMemberDTO } from "@domain/member/entities/Member";
+import {
+  Member,
+  type CreateMemberDTO,
+  type UpdateMemberDTO,
+  type MemberUserStatus,
+} from "@domain/member/entities/Member";
 import type { MemberRepository, DebtSummary } from "@domain/member/MemberRepository";
 import type { HttpClient } from "@infrastructure/api/HttpClient";
 import { ApiError } from "@infrastructure/api/types";
@@ -13,7 +18,9 @@ interface MemberApi {
   email: string | null;
   date_of_birth: string | null;
   gender: string | null;
+  training_group?: string | null;
   user_id?: string | null;
+  user_status?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -33,9 +40,9 @@ function mapMemberApiToMember(api: MemberApi): Member {
     (api.gender as "male" | "female" | "other") ?? undefined,
     new Date(api.created_at),
     new Date(api.updated_at),
-    api.user_id !== null && api.user_id !== undefined && api.user_id !== ""
-      ? String(api.user_id)
-      : undefined
+    api.user_id !== null && api.user_id !== undefined && api.user_id !== "" ? String(api.user_id) : undefined,
+    api.training_group ?? undefined,
+    (api.user_status as MemberUserStatus) ?? undefined
   );
 }
 
@@ -55,6 +62,7 @@ export class MemberRepositoryImpl implements MemberRepository {
         email: data.email || null,
         date_of_birth: data.dateOfBirth ? formatDate(data.dateOfBirth) : null,
         gender: data.gender || null,
+        training_group: data.trainingGroup || null,
       });
       return Result.success(mapMemberApiToMember(payload));
     } catch (err) {
@@ -78,12 +86,16 @@ export class MemberRepositoryImpl implements MemberRepository {
     page?: number;
     limit?: number;
     search?: string;
+    trainingGroup?: string;
+    status?: "pending" | "active";
   }): Promise<Result<{ members: Member[]; total: number }>> {
     try {
       const params: Record<string, unknown> = {};
       if (options?.search) params.search = options.search;
       if (options?.limit !== undefined && options?.limit !== null) params.page_size = options.limit;
       if (options?.page !== undefined && options?.page !== null) params.page = options.page;
+      if (options?.trainingGroup) params.training_group = options.trainingGroup;
+      if (options?.status) params.status = options.status;
       const payload = await this.http.get<MembersIndexPayload>("/members", params);
       const list = Array.isArray(payload.data) ? payload.data : [];
       const total = payload.meta?.total ?? list.length;
@@ -117,6 +129,7 @@ export class MemberRepositoryImpl implements MemberRepository {
       if (data.email !== undefined) body.email = data.email;
       if (data.dateOfBirth !== undefined) body.date_of_birth = data.dateOfBirth ? formatDate(data.dateOfBirth) : null;
       if (data.gender !== undefined) body.gender = data.gender;
+      if (data.trainingGroup !== undefined) body.training_group = data.trainingGroup;
       const payload = await this.http.put<MemberApi>(`/members/${id}`, body);
       return Result.success(mapMemberApiToMember(payload));
     } catch (err) {
@@ -186,6 +199,22 @@ export class MemberRepositoryImpl implements MemberRepository {
         return Result.error(emailErr ?? err.message);
       }
       return Result.error("Error al enviar la invitación");
+    }
+  }
+
+  async approve(id: string): Promise<Result<{ member: Member; message: string }>> {
+    try {
+      const res = await this.http.request<MemberApi>("post", `/members/${id}/approve`, { data: {} });
+      return Result.success({
+        member: mapMemberApiToMember(res.data),
+        message: res.message ?? "Registro aprobado.",
+      });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const memberErr = err.errors?.member?.[0];
+        return Result.error(memberErr ?? err.message);
+      }
+      return Result.error("Error al aprobar el registro");
     }
   }
 }

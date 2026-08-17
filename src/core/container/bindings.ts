@@ -33,9 +33,11 @@ import { UserDomain } from "@domain/user/UserDomain";
 import { RegisterMemberUseCase } from "@application/member/use-cases/RegisterMemberUseCase";
 import { ListMembersUseCase } from "@application/member/use-cases/ListMembersUseCase";
 import { GetMemberDetailsUseCase } from "@application/member/use-cases/GetMemberDetailsUseCase";
+import { GetMyMemberUseCase } from "@application/member/use-cases/GetMyMemberUseCase";
 import { UpdateMemberUseCase } from "@application/member/use-cases/UpdateMemberUseCase";
 import { DeleteMemberUseCase } from "@application/member/use-cases/DeleteMemberUseCase";
 import { InviteMemberUseCase } from "@application/member/use-cases/InviteMemberUseCase";
+import { ApproveMemberUseCase } from "@application/member/use-cases/ApproveMemberUseCase";
 
 // Use Cases - Bioimpedance
 import { RecordBioimpedanceUseCase } from "@application/bioimpedance/use-cases/RecordBioimpedanceUseCase";
@@ -47,6 +49,7 @@ import { LoginUseCase } from "@application/auth/use-cases/LoginUseCase";
 import { LogoutUseCase } from "@application/auth/use-cases/LogoutUseCase";
 import { GetCurrentUserUseCase } from "@application/auth/use-cases/GetCurrentUserUseCase";
 import { AcceptInviteUseCase } from "@application/auth/use-cases/AcceptInviteUseCase";
+import { RegisterUseCase } from "@application/auth/use-cases/RegisterUseCase";
 
 // Use Cases - Admin
 import { CreateUserUseCase } from "@application/admin/use-cases/CreateUserUseCase";
@@ -102,11 +105,13 @@ container.bind(TYPES.RegisterMemberUseCase).to(RegisterMemberUseCase).inSingleto
 container.bind(TYPES.ListMembersUseCase).to(ListMembersUseCase).inSingletonScope();
 
 container.bind(TYPES.GetMemberDetailsUseCase).to(GetMemberDetailsUseCase).inSingletonScope();
+container.bind(TYPES.GetMyMemberUseCase).to(GetMyMemberUseCase).inSingletonScope();
 
 container.bind(TYPES.UpdateMemberUseCase).to(UpdateMemberUseCase).inSingletonScope();
 
 container.bind(TYPES.DeleteMemberUseCase).to(DeleteMemberUseCase).inSingletonScope();
 container.bind(TYPES.InviteMemberUseCase).to(InviteMemberUseCase).inSingletonScope();
+container.bind(TYPES.ApproveMemberUseCase).to(ApproveMemberUseCase).inSingletonScope();
 
 // Use Cases - Bioimpedance
 container.bind(TYPES.RecordBioimpedanceUseCase).to(RecordBioimpedanceUseCase).inSingletonScope();
@@ -120,6 +125,7 @@ container.bind(TYPES.LogoutUseCase).to(LogoutUseCase).inSingletonScope();
 
 container.bind(TYPES.GetCurrentUserUseCase).to(GetCurrentUserUseCase).inSingletonScope();
 container.bind(TYPES.AcceptInviteUseCase).to(AcceptInviteUseCase).inSingletonScope();
+container.bind(TYPES.RegisterUseCase).to(RegisterUseCase).inSingletonScope();
 
 // Use Cases - Admin
 container.bind(TYPES.CreateUserUseCase).to(CreateUserUseCase).inSingletonScope();

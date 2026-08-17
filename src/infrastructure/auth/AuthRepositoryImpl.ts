@@ -20,6 +20,7 @@ interface UserApi {
   email: string;
   role: string;
   created_at: string;
+  member_id?: string | null;
 }
 
 function mapUserApiToUser(api: UserApi): User {
@@ -29,6 +30,7 @@ function mapUserApiToUser(api: UserApi): User {
     email: api.email,
     role: role ?? "user",
     createdAt: new Date(api.created_at),
+    memberId: api.member_id ?? undefined,
   };
 }
 
@@ -45,8 +47,11 @@ export class AuthRepositoryImpl implements AuthRepository {
       this.apiClient.setToken(data.access_token);
       return Result.success(mapUserApiToUser(data.user));
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Login failed";
-      return Result.error(message);
+      if (err instanceof ApiError) {
+        const emailErr = err.errors?.email?.[0];
+        return Result.error(emailErr ?? err.message);
+      }
+      return Result.error("Login failed");
     }
   }
 

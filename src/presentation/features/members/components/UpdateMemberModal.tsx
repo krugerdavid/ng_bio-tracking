@@ -24,6 +24,7 @@ export function UpdateMemberModal({ isOpen, onClose, onSuccess, member }: Update
     email: member.email || "",
     dateOfBirth: member.dateOfBirth ? member.dateOfBirth.toISOString().split("T")[0] : "",
     gender: (member.gender as "male" | "female" | "other") || "",
+    trainingGroup: member.trainingGroup || "",
   };
 
   const handleSubmit = async (memberData: CreateMemberDTO) => {

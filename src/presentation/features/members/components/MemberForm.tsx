@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import type { CreateMemberDTO } from "@domain/member/entities/Member";
+import { TrainingGroupSelect } from "@presentation/shared/components/TrainingGroupSelect";
 
 export interface MemberFormData {
   name: string;
@@ -7,6 +8,7 @@ export interface MemberFormData {
   email: string;
   dateOfBirth: string;
   gender: "male" | "female" | "other" | "";
+  trainingGroup: string;
 }
 
 interface MemberFormProps {
@@ -25,6 +27,7 @@ export function MemberForm({ initialData, onSubmit, onCancel, loading, submitLab
     email: initialData?.email || "",
     dateOfBirth: initialData?.dateOfBirth || "",
     gender: initialData?.gender || "",
+    trainingGroup: initialData?.trainingGroup || "",
   });
 
   const handleSubmit = async (e: FormEvent) => {
@@ -36,6 +39,7 @@ export function MemberForm({ initialData, onSubmit, onCancel, loading, submitLab
       email: formData.email || undefined,
       dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined,
       gender: formData.gender || undefined,
+      trainingGroup: formData.trainingGroup || undefined,
     };
 
     await onSubmit(memberData);
@@ -127,6 +131,12 @@ export function MemberForm({ initialData, onSubmit, onCancel, loading, submitLab
                 <option value="other">Otro</option>
               </select>
             </div>
+
+            <TrainingGroupSelect
+              id="trainingGroup"
+              value={formData.trainingGroup || undefined}
+              onChange={value => setFormData({ ...formData, trainingGroup: value || "" })}
+            />
           </div>
         </div>
       </div>

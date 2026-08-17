@@ -4,6 +4,7 @@ import type { MemberListItemDTO } from "@application/member/dtos/MemberListItemD
 import { RegisterMemberModal } from "../components/RegisterMemberModal";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
 import { formatCurrency } from "@presentation/shared/utils/formatters";
+import { TRAINING_GROUPS } from "@domain/member/trainingGroups";
 
 interface MemberListPageProps {
   members: MemberListItemDTO[];
@@ -12,10 +13,25 @@ interface MemberListPageProps {
   page: number;
   totalPages: number;
   totalMembers: number;
+  trainingGroupFilter: string;
+  showOnlyPending: boolean;
+  approvingId: string | null;
   onSearch: (value: string) => void;
+  onTrainingGroupFilterChange: (value: string) => void;
+  onTogglePendingOnly: (value: boolean) => void;
+  onApprove: (id: string, name: string) => void;
   onPageChange: (page: number) => void;
   onRefresh: () => void;
   onDelete: (id: string, name: string) => void;
+}
+
+function RegistrationStatusBadge({ status }: { status?: "pending" | "active" | "rejected" }) {
+  if (status !== "pending") return null;
+  return (
+    <span className="inline-flex text-xs font-semibold rounded-full px-2 py-0.5 bg-amber-100 text-amber-800">
+      Pendiente de aprobación
+    </span>
+  );
 }
 
 export function MemberListPage({
@@ -25,7 +41,13 @@ export function MemberListPage({
   page,
   totalPages,
   totalMembers,
+  trainingGroupFilter,
+  showOnlyPending,
+  approvingId,
   onSearch,
+  onTrainingGroupFilterChange,
+  onTogglePendingOnly,
+  onApprove,
   onPageChange,
   onRefresh,
 }: MemberListPageProps) {
@@ -82,6 +104,34 @@ export function MemberListPage({
           placeholder="Buscar por nombre..."
           onChange={e => onSearch(e.target.value)}
         />
+      </div>
+
+      {/* Filtros: grupo/horario y pendientes de aprobación */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <select
+          value={trainingGroupFilter}
+          onChange={e => onTrainingGroupFilterChange(e.target.value)}
+          className="px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+        >
+          <option value="">Todos los grupos</option>
+          {TRAINING_GROUPS.map(group => (
+            <option key={group} value={group}>
+              {group}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={() => onTogglePendingOnly(!showOnlyPending)}
+          className={`px-4 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+            showOnlyPending
+              ? "bg-amber-100 border-amber-300 text-amber-800"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          Pendientes de aprobación
+        </button>
       </div>
 
       {error && (
@@ -158,7 +208,24 @@ export function MemberListPage({
                         </span>
                         <span className="text-xs text-gray-500">{member.frequency}</span>
                         <span className="text-xs text-gray-500">{member.age} años</span>
+                        {member.trainingGroup && (
+                          <span className="text-xs text-gray-500">Grupo {member.trainingGroup}</span>
+                        )}
+                        <RegistrationStatusBadge status={member.registrationStatus} />
                       </div>
+                      {member.registrationStatus === "pending" && (
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            onApprove(member.id, member.name);
+                          }}
+                          disabled={approvingId === member.id}
+                          className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50"
+                        >
+                          {approvingId === member.id ? "Aprobando…" : "Aprobar"}
+                        </button>
+                      )}
                     </div>
                     <span className="text-orange-600 text-sm font-medium shrink-0 pt-0.5">Ver →</span>
                   </div>
@@ -176,9 +243,10 @@ export function MemberListPage({
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frecuencia</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grupo</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Edad</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                  <th className="px-4 py-3 w-20" />
+                  <th className="px-4 py-3 w-32" />
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -196,26 +264,44 @@ export function MemberListPage({
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{member.documentNumber}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{member.frequency}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{member.trainingGroup || "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{member.age} años</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex text-xs font-semibold rounded-full px-2 py-1 ${
-                          member.status === "active"
-                            ? "bg-green-100 text-green-800"
+                      <div className="flex flex-col gap-1 items-start">
+                        <span
+                          className={`inline-flex text-xs font-semibold rounded-full px-2 py-1 ${
+                            member.status === "active"
+                              ? "bg-green-100 text-green-800"
+                              : member.status === "moroso"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {member.status === "active"
+                            ? "Al día"
                             : member.status === "moroso"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {member.status === "active"
-                          ? "Al día"
-                          : member.status === "moroso"
-                            ? `Mora: ${formatCurrency(member.debtAmount)}`
-                            : "Inactivo"}
-                      </span>
+                              ? `Mora: ${formatCurrency(member.debtAmount)}`
+                              : "Inactivo"}
+                        </span>
+                        <RegistrationStatusBadge status={member.registrationStatus} />
+                      </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-orange-600 text-sm font-medium">Ver</span>
+                      {member.registrationStatus === "pending" ? (
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            onApprove(member.id, member.name);
+                          }}
+                          disabled={approvingId === member.id}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50"
+                        >
+                          {approvingId === member.id ? "Aprobando…" : "Aprobar"}
+                        </button>
+                      ) : (
+                        <span className="text-orange-600 text-sm font-medium">Ver</span>
+                      )}
                     </td>
                   </tr>
                 ))}

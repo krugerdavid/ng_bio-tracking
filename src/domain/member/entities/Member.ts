@@ -1,3 +1,5 @@
+export type MemberUserStatus = "pending" | "active" | "rejected";
+
 export class Member {
   constructor(
     public id: string,
@@ -8,7 +10,9 @@ export class Member {
     public gender: "male" | "female" | "other" | undefined,
     public createdAt: Date,
     public updatedAt: Date,
-    public userId?: string
+    public userId?: string,
+    public trainingGroup?: string,
+    public userStatus?: MemberUserStatus
   ) {}
 
   get age(): number {
@@ -24,5 +28,5 @@ export class Member {
   }
 }
 
-export type CreateMemberDTO = Omit<Member, "id" | "createdAt" | "updatedAt" | "age" | "userId">;
+export type CreateMemberDTO = Omit<Member, "id" | "createdAt" | "updatedAt" | "age" | "userId" | "userStatus">;
 export type UpdateMemberDTO = Partial<CreateMemberDTO>;

@@ -1,17 +1,23 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@presentation/shared/hooks/useAuth";
 import { PasswordInput } from "@presentation/shared/components/PasswordInput";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, authState } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (authState.isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [authState.isAuthenticated, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -110,6 +116,13 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          <p className="mt-6 text-center text-sm text-gray-500">
+            ¿No tenés cuenta?{" "}
+            <Link to="/register" className="text-orange-600 font-semibold hover:underline">
+              Registrate acá
+            </Link>
+          </p>
         </div>
       </div>
     </div>

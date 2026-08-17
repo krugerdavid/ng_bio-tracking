@@ -17,6 +17,8 @@ export class ListMembersUseCase {
     page?: number;
     limit?: number;
     search?: string;
+    trainingGroup?: string;
+    status?: "pending" | "active";
   }): Promise<Result<{ items: MemberListItemDTO[]; total: number }>> {
     const membersResult = await this.memberRepository.findAll(options);
 
@@ -69,6 +71,8 @@ export class ListMembersUseCase {
         status,
         debtAmount,
         avatarUrl: undefined,
+        trainingGroup: member.trainingGroup,
+        registrationStatus: member.userStatus,
       };
     });
 

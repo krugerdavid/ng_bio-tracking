@@ -3,6 +3,7 @@ import { container } from "@core/container/bindings";
 import { TYPES } from "@core/container/DIContainer";
 import type { ListMembersUseCase } from "@application/member/use-cases/ListMembersUseCase";
 import type { DeleteMemberUseCase } from "@application/member/use-cases/DeleteMemberUseCase";
+import type { ApproveMemberUseCase } from "@application/member/use-cases/ApproveMemberUseCase";
 import type { MemberListItemDTO } from "@application/member/dtos/MemberListItemDTO";
 import { MemberListPage } from "./MemberListPage";
 import { DeleteConfirmationModal } from "@presentation/shared/components/DeleteConfirmationModal";
@@ -15,6 +16,10 @@ export default function MemberListPageController() {
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [trainingGroupFilter, setTrainingGroupFilter] = useState("");
+  const [showOnlyPending, setShowOnlyPending] = useState(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState("");
 
   // Delete state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -24,11 +29,18 @@ export default function MemberListPageController() {
 
   const listMembersUseCase = container.get<ListMembersUseCase>(TYPES.ListMembersUseCase);
   const deleteMemberUseCase = container.get<DeleteMemberUseCase>(TYPES.DeleteMemberUseCase);
+  const approveMemberUseCase = container.get<ApproveMemberUseCase>(TYPES.ApproveMemberUseCase);
 
   const loadMembers = async () => {
     setLoading(true);
     setError("");
-    const result = await listMembersUseCase.execute({ page, limit, search });
+    const result = await listMembersUseCase.execute({
+      page,
+      limit,
+      search,
+      trainingGroup: trainingGroupFilter || undefined,
+      status: showOnlyPending ? "pending" : undefined,
+    });
 
     if (result.isError()) {
       setError(result.getError());
@@ -45,11 +57,34 @@ export default function MemberListPageController() {
   useEffect(() => {
     loadMembers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search]);
+  }, [page, search, trainingGroupFilter, showOnlyPending]);
 
   const handleSearch = (value: string) => {
     setSearch(value);
     setPage(1); // Reset to first page on search
+  };
+
+  const handleTrainingGroupFilterChange = (value: string) => {
+    setTrainingGroupFilter(value);
+    setPage(1);
+  };
+
+  const handleTogglePendingOnly = (value: boolean) => {
+    setShowOnlyPending(value);
+    setPage(1);
+  };
+
+  const handleApprove = async (id: string) => {
+    setApproveError("");
+    setApprovingId(id);
+    const result = await approveMemberUseCase.execute(id);
+    setApprovingId(null);
+
+    if (result.isError()) {
+      setApproveError(result.getError());
+    } else {
+      loadMembers();
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -91,11 +126,17 @@ export default function MemberListPageController() {
       <MemberListPage
         members={members}
         loading={loading}
-        error={error}
+        error={error || approveError}
         page={page}
         totalPages={Math.ceil(total / limit)}
         totalMembers={total}
+        trainingGroupFilter={trainingGroupFilter}
+        showOnlyPending={showOnlyPending}
+        approvingId={approvingId}
         onSearch={handleSearch}
+        onTrainingGroupFilterChange={handleTrainingGroupFilterChange}
+        onTogglePendingOnly={handleTogglePendingOnly}
+        onApprove={handleApprove}
         onPageChange={handlePageChange}
         onRefresh={loadMembers}
         onDelete={handleDeleteClick}

@@ -59,6 +59,9 @@ export const TYPES = {
   LogoutUseCase: Symbol.for("LogoutUseCase"),
   GetCurrentUserUseCase: Symbol.for("GetCurrentUserUseCase"),
   AcceptInviteUseCase: Symbol.for("AcceptInviteUseCase"),
+  RegisterUseCase: Symbol.for("RegisterUseCase"),
+  ApproveMemberUseCase: Symbol.for("ApproveMemberUseCase"),
+  GetMyMemberUseCase: Symbol.for("GetMyMemberUseCase"),
 
   // Use Cases - Admin
   CreateUserUseCase: Symbol.for("CreateUserUseCase"),

@@ -8,4 +8,7 @@ export interface MemberListItemDTO {
   status: "active" | "inactive" | "moroso";
   debtAmount: number; // Total debt after credit (0 if up to date)
   avatarUrl?: string;
+  trainingGroup?: string;
+  /** Estado del acceso a la app (registro público pendiente de aprobación), distinto de `status` (deuda). */
+  registrationStatus?: "pending" | "active" | "rejected";
 }

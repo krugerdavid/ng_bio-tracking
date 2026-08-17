@@ -17,6 +17,8 @@ export interface MemberRepository {
     page?: number;
     limit?: number;
     search?: string;
+    trainingGroup?: string;
+    status?: "pending" | "active";
   }): Promise<Result<{ members: Member[]; total: number }>>;
   findLatest(limit: number): Promise<Result<Member[]>>;
   update(id: string, data: UpdateMemberDTO): Promise<Result<Member>>;
@@ -25,4 +27,6 @@ export interface MemberRepository {
   getDebtSummaries(memberIds: string[]): Promise<Result<Map<string, DebtSummary>>>;
   /** Invite or resend app access email. Pass email when member has none. */
   invite(id: string, email?: string): Promise<Result<{ member: Member; message: string }>>;
+  /** Approve a pending self-registration: activates the linked user account. */
+  approve(id: string): Promise<Result<{ member: Member; message: string }>>;
 }

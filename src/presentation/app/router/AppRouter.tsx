@@ -3,8 +3,10 @@ import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 import AppLayout from "./AppLayout";
 import { PrivateRoute } from "./PrivateRoute";
 import { RequireRoleRoute } from "./RequireRoleRoute";
+import { HomeRouteController } from "./HomeRouteController";
 import LoginPage from "@presentation/features/auth/pages/LoginPage";
 import AcceptInvitePage from "@presentation/features/auth/pages/AcceptInvitePage";
+import RegisterPage from "@presentation/features/auth/pages/RegisterPage";
 import { Role } from "@domain/shared/value-objects/Role";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
 
@@ -19,7 +21,6 @@ const UserManagementPageController = lazy(
 );
 
 const AuditLogPageController = lazy(() => import("@presentation/features/audit/pages/AuditLogPageController"));
-const DashboardPageController = lazy(() => import("@presentation/features/dashboard/pages/DashboardPageController"));
 
 // Routes configuration - similar to merchant-web
 export const routesConfig = [
@@ -32,6 +33,10 @@ export const routesConfig = [
     element: <AcceptInvitePage />,
   },
   {
+    path: "/register",
+    element: <RegisterPage />,
+  },
+  {
     element: <PrivateRoute />,
     children: [
       {
@@ -39,26 +44,26 @@ export const routesConfig = [
         children: [
           {
             path: "/",
-            element: (
-              <Suspense fallback={<PageLoader />}>
-                <DashboardPageController />
-              </Suspense>
-            ),
+            element: <HomeRouteController />,
           },
           {
             path: "/members",
             element: (
-              <Suspense fallback={<PageLoader />}>
-                <MemberListPageController />
-              </Suspense>
+              <RequireRoleRoute allowedRoles={[Role.ADMIN, Role.ROOT]}>
+                <Suspense fallback={<PageLoader />}>
+                  <MemberListPageController />
+                </Suspense>
+              </RequireRoleRoute>
             ),
           },
           {
             path: "/member/:memberId",
             element: (
-              <Suspense fallback={<PageLoader />}>
-                <MemberDetailPageController />
-              </Suspense>
+              <RequireRoleRoute allowedRoles={[Role.ADMIN, Role.ROOT]}>
+                <Suspense fallback={<PageLoader />}>
+                  <MemberDetailPageController />
+                </Suspense>
+              </RequireRoleRoute>
             ),
           },
           {
