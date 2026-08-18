@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { container } from "@core/container/bindings";
 import { TYPES } from "@core/container/DIContainer";
 import type { ListMembersUseCase } from "@application/member/use-cases/ListMembersUseCase";
@@ -16,8 +17,9 @@ export default function MemberListPageController() {
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
   const [trainingGroupFilter, setTrainingGroupFilter] = useState("");
-  const [showOnlyPending, setShowOnlyPending] = useState(false);
+  const [showOnlyPending, setShowOnlyPending] = useState(() => searchParams.get("status") === "pending");
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [approveError, setApproveError] = useState("");
 

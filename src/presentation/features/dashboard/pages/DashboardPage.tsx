@@ -13,9 +13,11 @@ interface DashboardPageProps {
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
+  onApprove: (id: string) => void;
+  approvingId: string | null;
 }
 
-export function DashboardPage({ data, loading, error, onRefresh }: DashboardPageProps) {
+export function DashboardPage({ data, loading, error, onRefresh, onApprove, approvingId }: DashboardPageProps) {
   if (loading && !data) {
     return <PageLoader />;
   }
@@ -49,6 +51,40 @@ export function DashboardPage({ data, loading, error, onRefresh }: DashboardPage
           {loading ? "Actualizando…" : "Actualizar"}
         </button>
       </div>
+
+      {/* Pending approvals */}
+      {d.pendingApprovals.length > 0 && (
+        <div className="bg-amber-50 rounded-xl border border-amber-300 shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-5 py-4 border-b border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <h3 className="text-base sm:text-lg font-semibold text-amber-900">
+              Registros pendientes de aprobación ({d.pendingApprovals.length})
+            </h3>
+            <Link to="/members?status=pending" className="text-sm font-medium text-orange-600 hover:text-orange-700">
+              Ver todos
+            </Link>
+          </div>
+          <ul className="divide-y divide-amber-100">
+            {d.pendingApprovals.map(p => (
+              <li key={p.id} className="p-4 sm:px-5 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 truncate">{p.name}</p>
+                  <p className="text-sm text-gray-600 truncate">
+                    {p.email}
+                    {p.trainingGroup ? ` · Grupo ${p.trainingGroup}` : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onApprove(p.id)}
+                  disabled={approvingId === p.id}
+                  className="shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50"
+                >
+                  {approvingId === p.id ? "Aprobando…" : "Aprobar"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

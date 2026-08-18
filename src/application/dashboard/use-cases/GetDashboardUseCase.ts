@@ -9,6 +9,7 @@ import type {
   DashboardLastMember,
   DashboardLastPayment,
   DashboardMemberByFrequency,
+  DashboardPendingApproval,
 } from "../dtos/DashboardDTO";
 
 const DASHBOARD_PAGE_SIZE = 5000;
@@ -22,10 +23,11 @@ export class GetDashboardUseCase {
   ) {}
 
   async execute(): Promise<Result<DashboardResult>> {
-    const [membersResult, lastMembersResult, lastPaymentsResult] = await Promise.all([
+    const [membersResult, lastMembersResult, lastPaymentsResult, pendingApprovalsResult] = await Promise.all([
       this.memberRepository.findAll({ page: 1, limit: DASHBOARD_PAGE_SIZE }),
       this.memberRepository.findLatest(10),
       this.paymentRepository.findLatest(10),
+      this.memberRepository.findAll({ page: 1, limit: 50, status: "pending" }),
     ]);
 
     if (membersResult.isError()) {
@@ -107,6 +109,16 @@ export class GetDashboardUseCase {
       }));
     }
 
+    const pendingApprovals: DashboardPendingApproval[] = pendingApprovalsResult.isSuccess()
+      ? pendingApprovalsResult.getValue().members.map(m => ({
+          id: m.id,
+          name: m.name,
+          email: m.email ?? "",
+          trainingGroup: m.trainingGroup,
+          createdAt: m.createdAt,
+        }))
+      : [];
+
     return Result.success({
       totalMembers,
       inArrearsCount,
@@ -114,6 +126,7 @@ export class GetDashboardUseCase {
       membersByFrequency,
       lastMembers,
       lastPayments,
+      pendingApprovals,
     });
   }
 }

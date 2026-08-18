@@ -10,6 +10,14 @@ export interface DashboardLastMember {
   createdAt: Date;
 }
 
+export interface DashboardPendingApproval {
+  id: string;
+  name: string;
+  email: string;
+  trainingGroup?: string;
+  createdAt: Date;
+}
+
 export interface DashboardLastPayment {
   id: string;
   memberId: string;
@@ -27,4 +35,5 @@ export interface DashboardResult {
   membersByFrequency: DashboardMemberByFrequency[];
   lastMembers: DashboardLastMember[];
   lastPayments: DashboardLastPayment[];
+  pendingApprovals: DashboardPendingApproval[];
 }
