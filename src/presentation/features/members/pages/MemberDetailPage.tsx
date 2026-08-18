@@ -12,6 +12,8 @@ import { FormModal } from "../../../shared/components/FormModal";
 import { Tabs } from "../../../shared/components/Tabs";
 import { PageLoader } from "../../../shared/components/PageLoader";
 import { DeleteConfirmationModal } from "../../../shared/components/DeleteConfirmationModal";
+import { MetricCard } from "../../../shared/components/MetricCard";
+import { getTrendIndicator } from "../../../shared/utils/bioimpedanceTrend";
 import { formatWithThousandsSeparator, formatCurrency, formatLocalDate } from "../../../shared/utils/formatters";
 
 interface MemberDetailPageProps {
@@ -37,55 +39,6 @@ interface MemberDetailPageProps {
   onUpdatePayment: (id: string, data: UpdatePaymentDTO) => Promise<void>;
   onDeletePayment: (id: string) => Promise<void>;
 }
-
-// Helper function to compare values and return indicator
-const getTrendIndicator = (
-  current: number | undefined,
-  previous: number | null | undefined
-): { icon: string; color: string } | null => {
-  if (current === undefined || previous === null || previous === undefined) return null;
-
-  const diff = current - previous;
-  if (Math.abs(diff) < 0.01) return null; // Ignore very small differences
-
-  if (diff > 0) {
-    return { icon: "▲", color: "text-red-500" };
-  } else {
-    return { icon: "▼", color: "text-green-500" };
-  }
-};
-
-// Helper function to render metric with trend indicator
-const MetricCard = ({
-  label,
-  value,
-  previousValue,
-  unit,
-  trend,
-}: {
-  label: string;
-  value: number | undefined;
-  previousValue: number | null | undefined;
-  unit: string;
-  trend: { icon: string; color: string } | null;
-}) => (
-  <div className=" border border-gray-200 p-4 rounded-lg shadow-sm">
-    <div className="flex items-center justify-between mb-1">
-      <p className="text-xs text-gray-600 font-semibold">{label}</p>
-    </div>
-    <div className="flex flex-col items-start justify-between mb-1">
-      <p className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-        {value ?? "—"} {value !== undefined ? unit : ""}{" "}
-        {trend && (
-          <span className={`text-md ${trend.color} font-bold`} title={trend.icon === "▲" ? "Aumentó" : "Disminuyó"}>
-            {trend.icon}
-          </span>
-        )}
-      </p>
-      <p className="text-sm text-gray-400 font-semibold">{previousValue ? `${previousValue} ${unit}` : "N/A"}</p>
-    </div>
-  </div>
-);
 
 export function MemberDetailPage({
   details,

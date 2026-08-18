@@ -10,7 +10,7 @@ import type {
 import type { Member } from "@domain/member/entities/Member";
 import type { Bioimpedance } from "@domain/bioimpedance/entities/Bioimpedance";
 import { useAuth } from "@presentation/shared/hooks/useAuth";
-import { MemberHomePage } from "./MemberHomePage";
+import { MemberHomePage, type RegisterBioimpedanceData } from "./MemberHomePage";
 
 export default function MemberHomePageController() {
   const { authState } = useAuth();
@@ -55,13 +55,20 @@ export default function MemberHomePageController() {
     load();
   }, [load]);
 
-  const handleRegisterWeight = async (data: { date: Date; weight: number; notes?: string }) => {
+  const handleRegisterBioimpedance = async (data: RegisterBioimpedanceData) => {
     if (!member) return;
 
     const result = await recordBioimpedanceUseCase.execute({
       memberId: member.id,
       date: data.date,
       weight: data.weight,
+      height: data.height,
+      imc: data.imc,
+      bodyFatPercentage: data.bodyFatPercentage,
+      muscleMassPercentage: data.muscleMassPercentage,
+      kcal: data.kcal,
+      metabolicAge: data.metabolicAge,
+      visceralFatPercentage: data.visceralFatPercentage,
       notes: data.notes,
     });
 
@@ -79,7 +86,7 @@ export default function MemberHomePageController() {
       paymentStatus={paymentStatus}
       loading={loading}
       error={error}
-      onRegisterWeight={handleRegisterWeight}
+      onRegisterBioimpedance={handleRegisterBioimpedance}
     />
   );
 }
