@@ -7,7 +7,7 @@ import {
   type UpdateMemberDTO,
   type MemberUserStatus,
 } from "@domain/member/entities/Member";
-import type { MemberRepository, DebtSummary } from "@domain/member/MemberRepository";
+import type { MemberRepository, DebtSummary, EngagementSummary } from "@domain/member/MemberRepository";
 import type { HttpClient } from "@infrastructure/api/HttpClient";
 import { ApiError } from "@infrastructure/api/types";
 
@@ -215,6 +215,26 @@ export class MemberRepositoryImpl implements MemberRepository {
         return Result.error(memberErr ?? err.message);
       }
       return Result.error("Error al aprobar el registro");
+    }
+  }
+
+  async getEngagementSummary(): Promise<Result<EngagementSummary>> {
+    try {
+      const payload = await this.http.get<{
+        never_logged_in_count: number;
+        never_logged_in: { id: string; name: string; email: string | null; training_group: string | null }[];
+      }>("/reports/engagement");
+      return Result.success({
+        neverLoggedInCount: payload.never_logged_in_count,
+        neverLoggedIn: payload.never_logged_in.map(m => ({
+          id: m.id,
+          name: m.name,
+          email: m.email ?? undefined,
+          trainingGroup: m.training_group ?? undefined,
+        })),
+      });
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching engagement summary");
     }
   }
 }

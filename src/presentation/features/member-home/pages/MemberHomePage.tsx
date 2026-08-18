@@ -5,6 +5,7 @@ import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaym
 import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
 import { FormModal } from "@presentation/shared/components/FormModal";
+import { DeleteConfirmationModal } from "@presentation/shared/components/DeleteConfirmationModal";
 import { MetricCard } from "@presentation/shared/components/MetricCard";
 import { getTrendIndicator } from "@presentation/shared/utils/bioimpedanceTrend";
 import { formatCurrency, formatLocalDate } from "@presentation/shared/utils/formatters";
@@ -33,6 +34,8 @@ interface MemberHomePageProps {
   loading: boolean;
   error?: string;
   onRegisterBioimpedance: (data: RegisterBioimpedanceData) => Promise<void>;
+  onUpdateBioimpedance: (id: string, data: RegisterBioimpedanceData) => Promise<void>;
+  onDeleteBioimpedance: (id: string) => Promise<void>;
 }
 
 interface FormFields {
@@ -75,13 +78,38 @@ export function MemberHomePage({
   loading,
   error,
   onRegisterBioimpedance,
+  onUpdateBioimpedance,
+  onDeleteBioimpedance,
 }: MemberHomePageProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormFields>(emptyForm());
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  const [deletingRecord, setDeletingRecord] = useState<Bioimpedance | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
   const setField = (field: keyof FormFields, value: string) => setForm(prev => ({ ...prev, [field]: value }));
+
+  const openEditModal = (record: Bioimpedance) => {
+    setEditingId(record.id);
+    setForm({
+      date: new Date(record.date).toISOString().split("T")[0],
+      weight: record.weight.toString(),
+      height: record.height?.toString() ?? "",
+      imc: record.imc?.toString() ?? "",
+      bodyFatPercentage: record.bodyFatPercentage?.toString() ?? "",
+      muscleMassPercentage: record.muscleMassPercentage?.toString() ?? "",
+      kcal: record.kcal?.toString() ?? "",
+      metabolicAge: record.metabolicAge?.toString() ?? "",
+      visceralFatPercentage: record.visceralFatPercentage?.toString() ?? "",
+      notes: record.notes ?? "",
+    });
+    setFormError("");
+    setIsModalOpen(true);
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -93,26 +121,47 @@ export function MemberHomePage({
       return;
     }
 
+    const data: RegisterBioimpedanceData = {
+      date: new Date(form.date),
+      weight: weightValue,
+      height: parseOptionalFloat(form.height),
+      imc: parseOptionalFloat(form.imc),
+      bodyFatPercentage: parseOptionalFloat(form.bodyFatPercentage),
+      muscleMassPercentage: parseOptionalFloat(form.muscleMassPercentage),
+      kcal: parseOptionalFloat(form.kcal),
+      metabolicAge: parseOptionalFloat(form.metabolicAge),
+      visceralFatPercentage: parseOptionalFloat(form.visceralFatPercentage),
+      notes: form.notes || undefined,
+    };
+
     setIsSaving(true);
     try {
-      await onRegisterBioimpedance({
-        date: new Date(form.date),
-        weight: weightValue,
-        height: parseOptionalFloat(form.height),
-        imc: parseOptionalFloat(form.imc),
-        bodyFatPercentage: parseOptionalFloat(form.bodyFatPercentage),
-        muscleMassPercentage: parseOptionalFloat(form.muscleMassPercentage),
-        kcal: parseOptionalFloat(form.kcal),
-        metabolicAge: parseOptionalFloat(form.metabolicAge),
-        visceralFatPercentage: parseOptionalFloat(form.visceralFatPercentage),
-        notes: form.notes || undefined,
-      });
+      if (editingId) {
+        await onUpdateBioimpedance(editingId, data);
+      } else {
+        await onRegisterBioimpedance(data);
+      }
       setIsModalOpen(false);
+      setEditingId(null);
       setForm(emptyForm());
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "No se pudo guardar. Probá de nuevo.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingRecord) return;
+    setDeleteError("");
+    setIsDeleting(true);
+    try {
+      await onDeleteBioimpedance(deletingRecord.id);
+      setDeletingRecord(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "No se pudo eliminar. Probá de nuevo.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -140,7 +189,12 @@ export function MemberHomePage({
           {member.trainingGroup && <p className="text-gray-600 mt-1">Grupo {member.trainingGroup}</p>}
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingId(null);
+            setForm(emptyForm());
+            setFormError("");
+            setIsModalOpen(true);
+          }}
           className="shrink-0 px-4 py-2.5 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow-lg hover:bg-orange-600 transition-all duration-300"
         >
           Registrar medición
@@ -302,6 +356,22 @@ export function MemberHomePage({
                   {record.notes && (
                     <p className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600">{record.notes}</p>
                   )}
+                  {record.status === "pending" && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex gap-3">
+                      <button
+                        onClick={() => openEditModal(record)}
+                        className="text-sm font-semibold text-orange-600 hover:text-orange-700"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => setDeletingRecord(record)}
+                        className="text-sm font-semibold text-red-600 hover:text-red-700"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </li>
             ))}
@@ -345,6 +415,7 @@ export function MemberHomePage({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
+                  <th className="px-6 py-3 w-32" />
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -379,6 +450,24 @@ export function MemberHomePage({
                         </span>
                       )}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {record.status === "pending" && (
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => openEditModal(record)}
+                            className="font-semibold text-orange-600 hover:text-orange-700"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => setDeletingRecord(record)}
+                            className="font-semibold text-red-600 hover:text-red-700"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -391,10 +480,11 @@ export function MemberHomePage({
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
+          setEditingId(null);
           setForm(emptyForm());
           setFormError("");
         }}
-        title="Registrar medición"
+        title={editingId ? "Editar medición" : "Registrar medición"}
         size="lg"
         onSubmit={handleSubmit}
         submitLabel="Guardar"
@@ -556,6 +646,20 @@ export function MemberHomePage({
 
         <p className="text-xs text-gray-500">Solo el peso es obligatorio — completá el resto si tu balanza los mide.</p>
       </FormModal>
+
+      <DeleteConfirmationModal
+        isOpen={deletingRecord !== null}
+        onClose={() => {
+          setDeletingRecord(null);
+          setDeleteError("");
+        }}
+        onConfirm={handleDelete}
+        title="Eliminar medición"
+        message="¿Estás seguro que querés eliminar esta medición? Esta acción no se puede deshacer."
+        itemName={deletingRecord ? formatLocalDate(deletingRecord.date) : undefined}
+        loading={isDeleting}
+        error={deleteError}
+      />
     </div>
   );
 }

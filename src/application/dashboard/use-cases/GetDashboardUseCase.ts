@@ -10,6 +10,7 @@ import type {
   DashboardLastPayment,
   DashboardMemberByFrequency,
   DashboardPendingApproval,
+  DashboardNeverLoggedIn,
 } from "../dtos/DashboardDTO";
 
 const DASHBOARD_PAGE_SIZE = 5000;
@@ -23,14 +24,21 @@ export class GetDashboardUseCase {
   ) {}
 
   async execute(): Promise<Result<DashboardResult>> {
-    const [membersResult, lastMembersResult, lastPaymentsResult, pendingApprovalsResult, revenueResult] =
-      await Promise.all([
-        this.memberRepository.findAll({ page: 1, limit: DASHBOARD_PAGE_SIZE }),
-        this.memberRepository.findLatest(10),
-        this.paymentRepository.findLatest(10),
-        this.memberRepository.findAll({ page: 1, limit: 50, status: "pending" }),
-        this.paymentRepository.getRevenueSummary(),
-      ]);
+    const [
+      membersResult,
+      lastMembersResult,
+      lastPaymentsResult,
+      pendingApprovalsResult,
+      revenueResult,
+      engagementResult,
+    ] = await Promise.all([
+      this.memberRepository.findAll({ page: 1, limit: DASHBOARD_PAGE_SIZE }),
+      this.memberRepository.findLatest(10),
+      this.paymentRepository.findLatest(10),
+      this.memberRepository.findAll({ page: 1, limit: 50, status: "pending" }),
+      this.paymentRepository.getRevenueSummary(),
+      this.memberRepository.getEngagementSummary(),
+    ]);
 
     if (membersResult.isError()) {
       return Result.error(membersResult.getError());
@@ -124,6 +132,11 @@ export class GetDashboardUseCase {
     const revenueByMonth = revenueResult.isSuccess() ? revenueResult.getValue().monthlyRevenue : [];
     const creditBalanceTotal = revenueResult.isSuccess() ? revenueResult.getValue().creditBalanceTotal : 0;
 
+    const neverLoggedInCount = engagementResult.isSuccess() ? engagementResult.getValue().neverLoggedInCount : 0;
+    const neverLoggedIn: DashboardNeverLoggedIn[] = engagementResult.isSuccess()
+      ? engagementResult.getValue().neverLoggedIn
+      : [];
+
     return Result.success({
       totalMembers,
       inArrearsCount,
@@ -134,6 +147,8 @@ export class GetDashboardUseCase {
       pendingApprovals,
       revenueByMonth,
       creditBalanceTotal,
+      neverLoggedInCount,
+      neverLoggedIn,
     });
   }
 }

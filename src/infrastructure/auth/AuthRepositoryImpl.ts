@@ -31,6 +31,7 @@ function mapUserApiToUser(api: UserApi): User {
     role: role ?? "user",
     createdAt: new Date(api.created_at),
     memberId: api.member_id ?? undefined,
+    name: api.name,
   };
 }
 

@@ -3,6 +3,8 @@ import { container } from "@core/container/bindings";
 import { TYPES } from "@core/container/DIContainer";
 import type { GetMyMemberUseCase } from "@application/member/use-cases/GetMyMemberUseCase";
 import type { RecordBioimpedanceUseCase } from "@application/bioimpedance/use-cases/RecordBioimpedanceUseCase";
+import type { UpdateBioimpedanceUseCase } from "@application/bioimpedance/use-cases/UpdateBioimpedanceUseCase";
+import type { DeleteBioimpedanceUseCase } from "@application/bioimpedance/use-cases/DeleteBioimpedanceUseCase";
 import type {
   GetPaymentStatusUseCase,
   PaymentStatusResult,
@@ -29,6 +31,8 @@ export default function MemberHomePageController() {
   const getPaymentStatusUseCase = container.get<GetPaymentStatusUseCase>(TYPES.GetPaymentStatusUseCase);
   const getMembershipPlanUseCase = container.get<GetMembershipPlanUseCase>(TYPES.GetMembershipPlanUseCase);
   const recordBioimpedanceUseCase = container.get<RecordBioimpedanceUseCase>(TYPES.RecordBioimpedanceUseCase);
+  const updateBioimpedanceUseCase = container.get<UpdateBioimpedanceUseCase>(TYPES.UpdateBioimpedanceUseCase);
+  const deleteBioimpedanceUseCase = container.get<DeleteBioimpedanceUseCase>(TYPES.DeleteBioimpedanceUseCase);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,6 +93,26 @@ export default function MemberHomePageController() {
     await load();
   };
 
+  const handleUpdateBioimpedance = async (id: string, data: RegisterBioimpedanceData) => {
+    const result = await updateBioimpedanceUseCase.execute(id, data);
+
+    if (result.isError()) {
+      throw new Error(result.getError());
+    }
+
+    await load();
+  };
+
+  const handleDeleteBioimpedance = async (id: string) => {
+    const result = await deleteBioimpedanceUseCase.execute(id);
+
+    if (result.isError()) {
+      throw new Error(result.getError());
+    }
+
+    await load();
+  };
+
   return (
     <MemberHomePage
       member={member}
@@ -98,6 +122,8 @@ export default function MemberHomePageController() {
       loading={loading}
       error={error}
       onRegisterBioimpedance={handleRegisterBioimpedance}
+      onUpdateBioimpedance={handleUpdateBioimpedance}
+      onDeleteBioimpedance={handleDeleteBioimpedance}
     />
   );
 }

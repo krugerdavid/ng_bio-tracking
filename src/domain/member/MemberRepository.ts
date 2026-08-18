@@ -10,6 +10,18 @@ export interface DebtSummary {
   totalDebtAfterCredit: number;
 }
 
+export interface NeverLoggedInMember {
+  id: string;
+  name: string;
+  email?: string;
+  trainingGroup?: string;
+}
+
+export interface EngagementSummary {
+  neverLoggedInCount: number;
+  neverLoggedIn: NeverLoggedInMember[];
+}
+
 export interface MemberRepository {
   create(data: CreateMemberDTO): Promise<Result<Member>>;
   findById(id: string): Promise<Result<Member | null>>;
@@ -29,4 +41,5 @@ export interface MemberRepository {
   invite(id: string, email?: string): Promise<Result<{ member: Member; message: string }>>;
   /** Approve a pending self-registration: activates the linked user account. */
   approve(id: string): Promise<Result<{ member: Member; message: string }>>;
+  getEngagementSummary(): Promise<Result<EngagementSummary>>;
 }

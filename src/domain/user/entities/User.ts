@@ -6,4 +6,5 @@ export interface User {
   role: Role;
   createdAt: Date;
   memberId?: string;
+  name?: string;
 }

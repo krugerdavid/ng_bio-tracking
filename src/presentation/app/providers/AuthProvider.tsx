@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import * as Sentry from "@sentry/react";
 import { container, TYPES } from "@core/container/DIContainer";
 import type { AuthRepository } from "@domain/auth/AuthRepository";
 import type { User } from "@domain/user/entities/User";
@@ -91,6 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearAuthError = useCallback(() => {
     setAuthState(prev => ({ ...prev, error: null }));
   }, []);
+
+  // Asocia el usuario logueado a los eventos de Sentry (no-op si Sentry no está inicializado).
+  useEffect(() => {
+    const user = authState.user;
+    Sentry.setUser(user ? { id: user.id, email: user.email, username: user.name ?? user.email } : null);
+  }, [authState.user]);
 
   const contextValue = useMemo<AuthContextType>(
     () => ({

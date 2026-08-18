@@ -135,6 +135,28 @@ export function DashboardPage({ data, loading, error, onRefresh, onApprove, appr
         </div>
       )}
 
+      {/* Never logged in */}
+      {d.neverLoggedIn.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-5 py-4 border-b border-gray-100">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+              Aprobados que nunca ingresaron ({d.neverLoggedInCount})
+            </h3>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {d.neverLoggedIn.map(m => (
+              <li key={m.id} className="p-4 sm:px-5">
+                <p className="font-medium text-gray-900 truncate">{m.name}</p>
+                <p className="text-sm text-gray-600 truncate">
+                  {m.email}
+                  {m.trainingGroup ? ` · Grupo ${m.trainingGroup}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Last 10 members */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

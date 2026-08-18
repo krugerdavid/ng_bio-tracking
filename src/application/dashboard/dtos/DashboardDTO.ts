@@ -18,6 +18,13 @@ export interface DashboardPendingApproval {
   createdAt: Date;
 }
 
+export interface DashboardNeverLoggedIn {
+  id: string;
+  name: string;
+  email?: string;
+  trainingGroup?: string;
+}
+
 export interface DashboardLastPayment {
   id: string;
   memberId: string;
@@ -38,4 +45,6 @@ export interface DashboardResult {
   pendingApprovals: DashboardPendingApproval[];
   revenueByMonth: { month: string; total: number }[];
   creditBalanceTotal: number;
+  neverLoggedInCount: number;
+  neverLoggedIn: DashboardNeverLoggedIn[];
 }

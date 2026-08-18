@@ -3,6 +3,7 @@ import path from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -44,6 +45,20 @@ export default defineConfig({
         ],
       },
     }),
+    // Sube sourcemaps a Sentry solo cuando hay auth token (build de prod en Netlify).
+    // Sin él (build local) no hace nada — no rompe `npm run build` en desarrollo.
+    ...(process.env.SENTRY_AUTH_TOKEN
+      ? [
+          sentryVitePlugin({
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            sourcemaps: {
+              filesToDeleteAfterUpload: ["./dist/**/*.map"],
+            },
+          }),
+        ]
+      : []),
   ],
 
   build: {
