@@ -123,6 +123,7 @@ export class PaymentRepositoryImpl implements PaymentRepository {
   async update(id: string, data: UpdatePaymentDTO): Promise<Result<Payment>> {
     try {
       const body: Record<string, unknown> = {};
+      if (data.month !== undefined) body.month = data.month;
       if (data.amount !== undefined) body.amount = data.amount;
       if (data.paymentDate !== undefined) body.payment_date = formatDate(data.paymentDate);
       if (data.status !== undefined) body.status = data.status;

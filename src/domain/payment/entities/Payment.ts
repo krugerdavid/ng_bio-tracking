@@ -13,4 +13,4 @@ export interface Payment {
 }
 
 export type CreatePaymentDTO = Omit<Payment, "id" | "createdAt" | "updatedAt">;
-export type UpdatePaymentDTO = Partial<Omit<CreatePaymentDTO, "memberId" | "month">>;
+export type UpdatePaymentDTO = Partial<Omit<CreatePaymentDTO, "memberId">>;

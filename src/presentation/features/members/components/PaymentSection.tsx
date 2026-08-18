@@ -41,8 +41,11 @@ export function PaymentSection({
   const [isDeletingPayment, setIsDeletingPayment] = useState(false);
   const [isSavingPayment, setIsSavingPayment] = useState(false);
   const [paymentFormError, setPaymentFormError] = useState("");
+  const defaultPaymentMonth = (status: PaymentStatusResult | null): string =>
+    status && status.overdueMonths.length > 0 ? status.overdueMonths[0] : new Date().toISOString().slice(0, 7);
+
   const [paymentFormData, setPaymentFormData] = useState({
-    month: new Date().toISOString().slice(0, 7),
+    month: defaultPaymentMonth(paymentStatus),
     amount: membershipPlan?.monthlyFee?.toString() || "",
     paymentDate: new Date().toISOString().split("T")[0],
     notes: "",
@@ -74,6 +77,7 @@ export function PaymentSection({
     try {
       if (editingPayment) {
         const updateData: UpdatePaymentDTO = {
+          month: paymentFormData.month,
           amount,
           paymentDate: new Date(paymentFormData.paymentDate),
           status: "paid",
@@ -94,7 +98,7 @@ export function PaymentSection({
       setShowPaymentModal(false);
       setEditingPayment(null);
       setPaymentFormData({
-        month: new Date().toISOString().slice(0, 7),
+        month: defaultPaymentMonth(paymentStatus),
         amount: membershipPlan.monthlyFee.toString(),
         paymentDate: new Date().toISOString().split("T")[0],
         notes: "",
@@ -159,7 +163,7 @@ export function PaymentSection({
           onClick={() => {
             setEditingPayment(null);
             setPaymentFormData({
-              month: new Date().toISOString().slice(0, 7),
+              month: defaultPaymentMonth(paymentStatus),
               amount: membershipPlan?.monthlyFee?.toString() || "",
               paymentDate: new Date().toISOString().split("T")[0],
               notes: "",
@@ -390,10 +394,9 @@ export function PaymentSection({
             <input
               type="month"
               required
-              disabled={!!editingPayment}
               value={paymentFormData.month}
               onChange={e => setPaymentFormData({ ...paymentFormData, month: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
           <div>
