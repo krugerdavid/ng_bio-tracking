@@ -7,7 +7,9 @@ import type {
   GetPaymentStatusUseCase,
   PaymentStatusResult,
 } from "@application/payment/use-cases/GetPaymentStatusUseCase";
+import type { GetMembershipPlanUseCase } from "@application/payment/use-cases/GetMembershipPlanUseCase";
 import type { Member } from "@domain/member/entities/Member";
+import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import type { Bioimpedance } from "@domain/bioimpedance/entities/Bioimpedance";
 import { useAuth } from "@presentation/shared/hooks/useAuth";
 import { MemberHomePage, type RegisterBioimpedanceData } from "./MemberHomePage";
@@ -19,11 +21,13 @@ export default function MemberHomePageController() {
   const [member, setMember] = useState<Member | null>(null);
   const [bioimpedances, setBioimpedances] = useState<Bioimpedance[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusResult | null>(null);
+  const [membershipPlan, setMembershipPlan] = useState<MembershipPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const getMyMemberUseCase = container.get<GetMyMemberUseCase>(TYPES.GetMyMemberUseCase);
   const getPaymentStatusUseCase = container.get<GetPaymentStatusUseCase>(TYPES.GetPaymentStatusUseCase);
+  const getMembershipPlanUseCase = container.get<GetMembershipPlanUseCase>(TYPES.GetMembershipPlanUseCase);
   const recordBioimpedanceUseCase = container.get<RecordBioimpedanceUseCase>(TYPES.RecordBioimpedanceUseCase);
 
   const load = useCallback(async () => {
@@ -42,9 +46,15 @@ export default function MemberHomePageController() {
     setMember(member);
     setBioimpedances(bioimpedances);
 
-    const paymentResult = await getPaymentStatusUseCase.execute(member.id);
+    const [paymentResult, planResult] = await Promise.all([
+      getPaymentStatusUseCase.execute(member.id),
+      getMembershipPlanUseCase.execute(member.id),
+    ]);
     if (paymentResult.isSuccess()) {
       setPaymentStatus(paymentResult.getValue());
+    }
+    if (planResult.isSuccess()) {
+      setMembershipPlan(planResult.getValue());
     }
 
     setLoading(false);
@@ -84,6 +94,7 @@ export default function MemberHomePageController() {
       member={member}
       bioimpedances={bioimpedances}
       paymentStatus={paymentStatus}
+      membershipPlan={membershipPlan}
       loading={loading}
       error={error}
       onRegisterBioimpedance={handleRegisterBioimpedance}

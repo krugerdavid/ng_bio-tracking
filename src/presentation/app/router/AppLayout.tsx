@@ -74,10 +74,10 @@ export default function AppLayout() {
       <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
+            <Link to="/" onClick={e => handleNavClick(e, "/")} className="flex items-center space-x-2">
               <img src="/ngtraining.png" alt="NG Training Logo" className="h-8 sm:h-10 w-auto" />
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NG Training</h1>
-            </div>
+            </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
@@ -95,17 +95,19 @@ export default function AppLayout() {
                     Dashboard
                   </Link>
                 )}
-                <Link
-                  to="/members"
-                  onClick={e => handleNavClick(e, "/members")}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                    location.pathname === "/members" || location.pathname.startsWith("/member/")
-                      ? "bg-orange-500 text-white shadow-md"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                >
-                  Miembros
-                </Link>
+                {user && (isAdmin(user.role) || isRoot(user.role)) && (
+                  <Link
+                    to="/members"
+                    onClick={e => handleNavClick(e, "/members")}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                      location.pathname === "/members" || location.pathname.startsWith("/member/")
+                        ? "bg-orange-500 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    Miembros
+                  </Link>
+                )}
                 {user && (isAdmin(user.role) || isRoot(user.role)) && (
                   <Link
                     to="/users"
@@ -235,17 +237,19 @@ export default function AppLayout() {
           >
             Inicio
           </Link>
-          <Link
-            to="/members"
-            onClick={e => handleNavClick(e, "/members")}
-            className={`block px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
-              location.pathname === "/members" || location.pathname.startsWith("/member/")
-                ? "bg-orange-500 text-white shadow-md"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
-          >
-            Miembros
-          </Link>
+          {user && (isAdmin(user.role) || isRoot(user.role)) && (
+            <Link
+              to="/members"
+              onClick={e => handleNavClick(e, "/members")}
+              className={`block px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+                location.pathname === "/members" || location.pathname.startsWith("/member/")
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              }`}
+            >
+              Miembros
+            </Link>
+          )}
           {user && (isAdmin(user.role) || isRoot(user.role)) && (
             <Link
               to="/users"

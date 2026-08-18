@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { Member } from "@domain/member/entities/Member";
 import type { Bioimpedance } from "@domain/bioimpedance/entities/Bioimpedance";
 import type { PaymentStatusResult } from "@application/payment/use-cases/GetPaymentStatusUseCase";
+import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
 import { FormModal } from "@presentation/shared/components/FormModal";
 import { MetricCard } from "@presentation/shared/components/MetricCard";
@@ -28,6 +29,7 @@ interface MemberHomePageProps {
   member: Member | null;
   bioimpedances: Bioimpedance[];
   paymentStatus: PaymentStatusResult | null;
+  membershipPlan: MembershipPlan | null;
   loading: boolean;
   error?: string;
   onRegisterBioimpedance: (data: RegisterBioimpedanceData) => Promise<void>;
@@ -69,6 +71,7 @@ export function MemberHomePage({
   member,
   bioimpedances,
   paymentStatus,
+  membershipPlan,
   loading,
   error,
   onRegisterBioimpedance,
@@ -144,7 +147,7 @@ export function MemberHomePage({
         </button>
       </div>
 
-      {paymentStatus && (
+      {membershipPlan && paymentStatus && (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-3">Estado de cuenta</h3>
           {paymentStatus.isOverdue ? (

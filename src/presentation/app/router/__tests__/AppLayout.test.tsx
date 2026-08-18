@@ -45,7 +45,7 @@ describe("AppLayout", () => {
     );
 
     expect(screen.getByText("Inicio")).toBeInTheDocument();
-    expect(screen.getByText("Miembros")).toBeInTheDocument();
+    expect(screen.queryByText("Miembros")).not.toBeInTheDocument();
   });
 
   it("shows user email in dropdown", () => {
@@ -82,6 +82,7 @@ describe("AppLayout", () => {
     );
 
     expect(screen.getByText("Usuarios")).toBeInTheDocument();
+    expect(screen.getAllByText("Miembros").length).toBeGreaterThan(0);
   });
 
   it("calls logout when logout button is clicked", async () => {
