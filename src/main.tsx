@@ -15,6 +15,12 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     dsn: import.meta.env.VITE_SENTRY_DSN,
     tracesSampleRate: 0,
   });
+
+  // Expuesto para poder probar manualmente desde la consola del navegador:
+  // Sentry.captureException(new Error("prueba")) — un error tipeado directo en la
+  // consola no siempre dispara el handler global (particularidad del navegador),
+  // esto lo evita.
+  (window as typeof window & { Sentry: typeof Sentry }).Sentry = Sentry;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
