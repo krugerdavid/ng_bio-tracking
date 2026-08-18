@@ -36,4 +36,6 @@ export interface DashboardResult {
   lastMembers: DashboardLastMember[];
   lastPayments: DashboardLastPayment[];
   pendingApprovals: DashboardPendingApproval[];
+  revenueByMonth: { month: string; total: number }[];
+  creditBalanceTotal: number;
 }

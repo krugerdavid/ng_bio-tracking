@@ -2,7 +2,7 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "@core/container/DIContainer";
 import { Result } from "@core/types/Result";
 import type { Payment, CreatePaymentDTO, UpdatePaymentDTO } from "@domain/payment/entities/Payment";
-import type { PaymentRepository } from "@domain/payment/PaymentRepository";
+import type { PaymentRepository, RevenueSummary } from "@domain/payment/PaymentRepository";
 import type { HttpClient } from "@infrastructure/api/HttpClient";
 import { ApiError } from "@infrastructure/api/types";
 
@@ -141,6 +141,21 @@ export class PaymentRepositoryImpl implements PaymentRepository {
       return Result.success(undefined);
     } catch (err) {
       return Result.error(err instanceof ApiError ? err.message : "Error deleting payment");
+    }
+  }
+
+  async getRevenueSummary(): Promise<Result<RevenueSummary>> {
+    try {
+      const payload = await this.http.get<{
+        monthly: { month: string; total: number }[];
+        credit_balance_total: number;
+      }>("/reports/revenue");
+      return Result.success({
+        monthlyRevenue: payload.monthly.map(m => ({ month: m.month, total: Number(m.total) })),
+        creditBalanceTotal: Number(payload.credit_balance_total),
+      });
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching revenue summary");
     }
   }
 }

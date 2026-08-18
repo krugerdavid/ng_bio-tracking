@@ -23,12 +23,14 @@ export class GetDashboardUseCase {
   ) {}
 
   async execute(): Promise<Result<DashboardResult>> {
-    const [membersResult, lastMembersResult, lastPaymentsResult, pendingApprovalsResult] = await Promise.all([
-      this.memberRepository.findAll({ page: 1, limit: DASHBOARD_PAGE_SIZE }),
-      this.memberRepository.findLatest(10),
-      this.paymentRepository.findLatest(10),
-      this.memberRepository.findAll({ page: 1, limit: 50, status: "pending" }),
-    ]);
+    const [membersResult, lastMembersResult, lastPaymentsResult, pendingApprovalsResult, revenueResult] =
+      await Promise.all([
+        this.memberRepository.findAll({ page: 1, limit: DASHBOARD_PAGE_SIZE }),
+        this.memberRepository.findLatest(10),
+        this.paymentRepository.findLatest(10),
+        this.memberRepository.findAll({ page: 1, limit: 50, status: "pending" }),
+        this.paymentRepository.getRevenueSummary(),
+      ]);
 
     if (membersResult.isError()) {
       return Result.error(membersResult.getError());
@@ -119,6 +121,9 @@ export class GetDashboardUseCase {
         }))
       : [];
 
+    const revenueByMonth = revenueResult.isSuccess() ? revenueResult.getValue().monthlyRevenue : [];
+    const creditBalanceTotal = revenueResult.isSuccess() ? revenueResult.getValue().creditBalanceTotal : 0;
+
     return Result.success({
       totalMembers,
       inArrearsCount,
@@ -127,6 +132,8 @@ export class GetDashboardUseCase {
       lastMembers,
       lastPayments,
       pendingApprovals,
+      revenueByMonth,
+      creditBalanceTotal,
     });
   }
 }

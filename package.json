@@ -17,6 +17,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@sentry/react": "^10.70.0",
     "axios": "^1.13.2",
     "inversify": "^7.10.4",
     "react": "^19.2.0",

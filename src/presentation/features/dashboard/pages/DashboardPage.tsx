@@ -7,6 +7,7 @@ import {
   formatWithThousandsSeparator,
 } from "@presentation/shared/utils/formatters";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
+import { RevenueChart } from "../components/RevenueChart";
 
 interface DashboardPageProps {
   data: DashboardResult | null;
@@ -100,6 +101,16 @@ export function DashboardPage({ data, loading, error, onRefresh, onApprove, appr
           <p className="text-sm font-medium text-gray-500">Monto total en mora</p>
           <p className="mt-1 text-2xl font-bold text-red-600">{formatCurrency(d.totalAmountInArrears)}</p>
         </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <p className="text-sm font-medium text-gray-500">Saldo a favor total</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{formatCurrency(d.creditBalanceTotal)}</p>
+        </div>
+      </div>
+
+      {/* Revenue trend */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Ingresos por mes</h3>
+        <RevenueChart data={d.revenueByMonth} />
       </div>
 
       {/* By frequency (horarios / frecuencia semanal) */}

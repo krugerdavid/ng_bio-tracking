@@ -1,6 +1,11 @@
 import type { Result } from "@core/types/Result";
 import type { Payment, CreatePaymentDTO, UpdatePaymentDTO } from "./entities/Payment";
 
+export interface RevenueSummary {
+  monthlyRevenue: { month: string; total: number }[];
+  creditBalanceTotal: number;
+}
+
 export interface PaymentRepository {
   create(data: CreatePaymentDTO): Promise<Result<Payment>>;
   findById(id: string): Promise<Result<Payment | null>>;
@@ -10,4 +15,5 @@ export interface PaymentRepository {
   findByMonth(month: string): Promise<Result<Payment[]>>;
   update(id: string, data: UpdatePaymentDTO): Promise<Result<Payment>>;
   delete(id: string): Promise<Result<void>>;
+  getRevenueSummary(): Promise<Result<RevenueSummary>>;
 }
