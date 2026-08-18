@@ -22,6 +22,19 @@ export interface EngagementSummary {
   neverLoggedIn: NeverLoggedInMember[];
 }
 
+export interface IncompleteMember {
+  id: string;
+  name: string;
+  trainingGroup?: string;
+  missingPlan: boolean;
+  missingEmail: boolean;
+}
+
+export interface DataQualitySummary {
+  incompleteCount: number;
+  incomplete: IncompleteMember[];
+}
+
 export interface MemberRepository {
   create(data: CreateMemberDTO): Promise<Result<Member>>;
   findById(id: string): Promise<Result<Member | null>>;
@@ -42,4 +55,5 @@ export interface MemberRepository {
   /** Approve a pending self-registration: activates the linked user account. */
   approve(id: string): Promise<Result<{ member: Member; message: string }>>;
   getEngagementSummary(): Promise<Result<EngagementSummary>>;
+  getDataQualitySummary(): Promise<Result<DataQualitySummary>>;
 }

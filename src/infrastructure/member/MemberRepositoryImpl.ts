@@ -7,7 +7,12 @@ import {
   type UpdateMemberDTO,
   type MemberUserStatus,
 } from "@domain/member/entities/Member";
-import type { MemberRepository, DebtSummary, EngagementSummary } from "@domain/member/MemberRepository";
+import type {
+  MemberRepository,
+  DebtSummary,
+  EngagementSummary,
+  DataQualitySummary,
+} from "@domain/member/MemberRepository";
 import type { HttpClient } from "@infrastructure/api/HttpClient";
 import { ApiError } from "@infrastructure/api/types";
 
@@ -235,6 +240,33 @@ export class MemberRepositoryImpl implements MemberRepository {
       });
     } catch (err) {
       return Result.error(err instanceof ApiError ? err.message : "Error fetching engagement summary");
+    }
+  }
+
+  async getDataQualitySummary(): Promise<Result<DataQualitySummary>> {
+    try {
+      const payload = await this.http.get<{
+        incomplete_count: number;
+        incomplete: {
+          id: string;
+          name: string;
+          training_group: string | null;
+          missing_plan: boolean;
+          missing_email: boolean;
+        }[];
+      }>("/reports/data-quality");
+      return Result.success({
+        incompleteCount: payload.incomplete_count,
+        incomplete: payload.incomplete.map(m => ({
+          id: m.id,
+          name: m.name,
+          trainingGroup: m.training_group ?? undefined,
+          missingPlan: m.missing_plan,
+          missingEmail: m.missing_email,
+        })),
+      });
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching data quality summary");
     }
   }
 }

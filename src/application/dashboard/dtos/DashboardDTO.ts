@@ -25,6 +25,14 @@ export interface DashboardNeverLoggedIn {
   trainingGroup?: string;
 }
 
+export interface DashboardIncompleteMember {
+  id: string;
+  name: string;
+  trainingGroup?: string;
+  missingPlan: boolean;
+  missingEmail: boolean;
+}
+
 export interface DashboardLastPayment {
   id: string;
   memberId: string;
@@ -47,4 +55,6 @@ export interface DashboardResult {
   creditBalanceTotal: number;
   neverLoggedInCount: number;
   neverLoggedIn: DashboardNeverLoggedIn[];
+  incompleteCount: number;
+  incomplete: DashboardIncompleteMember[];
 }

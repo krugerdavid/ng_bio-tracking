@@ -11,6 +11,7 @@ import type {
   DashboardMemberByFrequency,
   DashboardPendingApproval,
   DashboardNeverLoggedIn,
+  DashboardIncompleteMember,
 } from "../dtos/DashboardDTO";
 
 const DASHBOARD_PAGE_SIZE = 5000;
@@ -31,6 +32,7 @@ export class GetDashboardUseCase {
       pendingApprovalsResult,
       revenueResult,
       engagementResult,
+      dataQualityResult,
     ] = await Promise.all([
       this.memberRepository.findAll({ page: 1, limit: DASHBOARD_PAGE_SIZE }),
       this.memberRepository.findLatest(10),
@@ -38,6 +40,7 @@ export class GetDashboardUseCase {
       this.memberRepository.findAll({ page: 1, limit: 50, status: "pending" }),
       this.paymentRepository.getRevenueSummary(),
       this.memberRepository.getEngagementSummary(),
+      this.memberRepository.getDataQualitySummary(),
     ]);
 
     if (membersResult.isError()) {
@@ -137,6 +140,17 @@ export class GetDashboardUseCase {
       ? engagementResult.getValue().neverLoggedIn
       : [];
 
+    const incompleteCount = dataQualityResult.isSuccess() ? dataQualityResult.getValue().incompleteCount : 0;
+    const incomplete: DashboardIncompleteMember[] = dataQualityResult.isSuccess()
+      ? dataQualityResult.getValue().incomplete.map(m => ({
+          id: m.id,
+          name: m.name,
+          trainingGroup: m.trainingGroup,
+          missingPlan: m.missingPlan,
+          missingEmail: m.missingEmail,
+        }))
+      : [];
+
     return Result.success({
       totalMembers,
       inArrearsCount,
@@ -149,6 +163,8 @@ export class GetDashboardUseCase {
       creditBalanceTotal,
       neverLoggedInCount,
       neverLoggedIn,
+      incompleteCount,
+      incomplete,
     });
   }
 }

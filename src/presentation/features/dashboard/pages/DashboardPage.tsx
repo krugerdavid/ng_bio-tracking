@@ -157,6 +157,46 @@ export function DashboardPage({ data, loading, error, onRefresh, onApprove, appr
         </div>
       )}
 
+      {/* Data quality: missing plan and/or email */}
+      {d.incomplete.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-5 py-4 border-b border-gray-100">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+              Datos incompletos ({d.incompleteCount})
+            </h3>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {d.incomplete.map(m => (
+              <li key={m.id}>
+                <Link
+                  to={`/member/${m.id}`}
+                  className="block p-4 sm:px-5 active:bg-gray-50 hover:bg-gray-50/80 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 truncate">{m.name}</p>
+                      {m.trainingGroup && <p className="text-sm text-gray-600 truncate">Grupo {m.trainingGroup}</p>}
+                    </div>
+                    <div className="flex shrink-0 gap-1.5">
+                      {m.missingPlan && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                          Sin plan
+                        </span>
+                      )}
+                      {m.missingEmail && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                          Sin email
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Last 10 members */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
