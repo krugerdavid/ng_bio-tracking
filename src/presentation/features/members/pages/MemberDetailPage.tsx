@@ -12,8 +12,7 @@ import { FormModal } from "../../../shared/components/FormModal";
 import { Tabs } from "../../../shared/components/Tabs";
 import { PageLoader } from "../../../shared/components/PageLoader";
 import { DeleteConfirmationModal } from "../../../shared/components/DeleteConfirmationModal";
-import { MetricCard } from "../../../shared/components/MetricCard";
-import { getTrendIndicator } from "../../../shared/utils/bioimpedanceTrend";
+import { BioimpedanceMetricsGrid } from "../../../shared/components/BioimpedanceMetricsGrid";
 import { formatWithThousandsSeparator, formatCurrency, formatLocalDate } from "../../../shared/utils/formatters";
 
 interface MemberDetailPageProps {
@@ -449,73 +448,12 @@ export function MemberDetailPage({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                <MetricCard
-                  label="Estatura"
-                  value={latestBioimpedance.height}
-                  previousValue={previousBioimpedance?.height ?? null}
-                  unit="cm"
-                  trend={getTrendIndicator(latestBioimpedance.height, previousBioimpedance?.height ?? null)}
-                />
-                <MetricCard
-                  label="Peso"
-                  value={latestBioimpedance.weight}
-                  previousValue={previousBioimpedance?.weight ?? null}
-                  unit="kg"
-                  trend={getTrendIndicator(latestBioimpedance.weight, previousBioimpedance?.weight ?? null)}
-                />
-                <MetricCard
-                  label="IMC"
-                  value={latestBioimpedance.imc}
-                  previousValue={previousBioimpedance?.imc ?? null}
-                  unit=""
-                  trend={getTrendIndicator(latestBioimpedance.imc, previousBioimpedance?.imc ?? null)}
-                />
-                <MetricCard
-                  label="% Grasa"
-                  value={latestBioimpedance.bodyFatPercentage}
-                  previousValue={previousBioimpedance?.bodyFatPercentage ?? null}
-                  unit="%"
-                  trend={getTrendIndicator(
-                    latestBioimpedance.bodyFatPercentage,
-                    previousBioimpedance?.bodyFatPercentage ?? null
-                  )}
-                />
-                <MetricCard
-                  label="% Músculo"
-                  value={latestBioimpedance.muscleMassPercentage}
-                  previousValue={previousBioimpedance?.muscleMassPercentage ?? null}
-                  unit="%"
-                  trend={getTrendIndicator(
-                    latestBioimpedance.muscleMassPercentage,
-                    previousBioimpedance?.muscleMassPercentage ?? null
-                  )}
-                />
-                <MetricCard
-                  label="KCAL"
-                  value={latestBioimpedance.kcal}
-                  previousValue={previousBioimpedance?.kcal ?? null}
-                  unit=""
-                  trend={getTrendIndicator(latestBioimpedance.kcal, previousBioimpedance?.kcal ?? null)}
-                />
-                <MetricCard
-                  label="Edad Metabólica"
-                  value={latestBioimpedance.metabolicAge}
-                  previousValue={previousBioimpedance?.metabolicAge ?? null}
-                  unit="años"
-                  trend={getTrendIndicator(latestBioimpedance.metabolicAge, previousBioimpedance?.metabolicAge ?? null)}
-                />
-                <MetricCard
-                  label="% Grasa Visceral"
-                  value={latestBioimpedance.visceralFatPercentage}
-                  previousValue={previousBioimpedance?.visceralFatPercentage ?? null}
-                  unit="%"
-                  trend={getTrendIndicator(
-                    latestBioimpedance.visceralFatPercentage,
-                    previousBioimpedance?.visceralFatPercentage ?? null
-                  )}
-                />
-              </div>
+              <BioimpedanceMetricsGrid
+                latest={latestBioimpedance}
+                previous={previousBioimpedance}
+                age={member.age}
+                gender={member.gender}
+              />
               {latestBioimpedance.notes && (
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="text-sm font-semibold text-gray-700 mb-1">Notas:</p>
@@ -532,10 +470,12 @@ export function MemberDetailPage({
           {/* Historical Bioimpedance Records */}
           {historicalRecords.length > 0 && (
             <div className="mb-8 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800 p-4 sm:p-6 pb-0">Historial de Registros</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 px-4 sm:px-6 pt-4 pb-6">
+                Historial de Registros
+              </h3>
 
               {/* Mobile: card list */}
-              <ul className="md:hidden divide-y divide-gray-100 p-4 sm:p-6 pt-4">
+              <ul className="md:hidden divide-y divide-gray-100 px-4 pb-4">
                 {historicalRecords.map(record => (
                   <li key={record.id} className="py-4 first:pt-0">
                     <div className="border border-gray-200 rounded-xl p-4 shadow-sm">
@@ -651,8 +591,8 @@ export function MemberDetailPage({
               </ul>
 
               {/* Desktop: table */}
-              <div className="hidden md:block overflow-x-auto p-4 sm:p-6 pt-4">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th
@@ -936,7 +876,7 @@ export function MemberDetailPage({
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">KCAL</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Metabolismo basal (kcal)</label>
           <input
             type="number"
             required

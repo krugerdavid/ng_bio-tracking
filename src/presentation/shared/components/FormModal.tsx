@@ -42,10 +42,10 @@ export function FormModal({
 }: FormModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size={size}>
-      <form onSubmit={onSubmit} className={formClassName ?? "space-y-4"}>
+      <form onSubmit={onSubmit} className="flex flex-col">
         {error && <div className={ERROR_BANNER}>{error}</div>}
-        <div className="min-h-0 divide-y divide-gray-200 space-y-4">{children}</div>
-        <div className="flex gap-3 border-t border-gray-200 pt-4 mt-4 -mb-2">
+        <div className={formClassName ?? "space-y-4"}>{children}</div>
+        <div className="flex items-center gap-3 border-t border-gray-200 pt-4 mt-4 shrink-0">
           <button type="submit" disabled={loading} className={FOOTER_BUTTON_PRIMARY}>
             {submitLabel}
           </button>

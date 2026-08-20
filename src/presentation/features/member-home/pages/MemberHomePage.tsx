@@ -6,8 +6,7 @@ import type { MembershipPlan } from "@domain/payment/entities/MembershipPlan";
 import { PageLoader } from "@presentation/shared/components/PageLoader";
 import { FormModal } from "@presentation/shared/components/FormModal";
 import { DeleteConfirmationModal } from "@presentation/shared/components/DeleteConfirmationModal";
-import { MetricCard } from "@presentation/shared/components/MetricCard";
-import { getTrendIndicator } from "@presentation/shared/utils/bioimpedanceTrend";
+import { BioimpedanceMetricsGrid } from "@presentation/shared/components/BioimpedanceMetricsGrid";
 import { formatCurrency, formatLocalDate } from "@presentation/shared/utils/formatters";
 
 const inputClass =
@@ -234,64 +233,7 @@ export function MemberHomePage({
             <p className="text-sm text-gray-500 mb-4">
               {formatLocalDate(latest.date, { year: "numeric", month: "long", day: "numeric" })}
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              <MetricCard
-                label="Estatura"
-                value={latest.height}
-                previousValue={previous?.height ?? null}
-                unit="cm"
-                trend={getTrendIndicator(latest.height, previous?.height ?? null)}
-              />
-              <MetricCard
-                label="Peso"
-                value={latest.weight}
-                previousValue={previous?.weight ?? null}
-                unit="kg"
-                trend={getTrendIndicator(latest.weight, previous?.weight ?? null)}
-              />
-              <MetricCard
-                label="IMC"
-                value={latest.imc}
-                previousValue={previous?.imc ?? null}
-                unit=""
-                trend={getTrendIndicator(latest.imc, previous?.imc ?? null)}
-              />
-              <MetricCard
-                label="% Grasa"
-                value={latest.bodyFatPercentage}
-                previousValue={previous?.bodyFatPercentage ?? null}
-                unit="%"
-                trend={getTrendIndicator(latest.bodyFatPercentage, previous?.bodyFatPercentage ?? null)}
-              />
-              <MetricCard
-                label="% Músculo"
-                value={latest.muscleMassPercentage}
-                previousValue={previous?.muscleMassPercentage ?? null}
-                unit="%"
-                trend={getTrendIndicator(latest.muscleMassPercentage, previous?.muscleMassPercentage ?? null)}
-              />
-              <MetricCard
-                label="KCAL"
-                value={latest.kcal}
-                previousValue={previous?.kcal ?? null}
-                unit=""
-                trend={getTrendIndicator(latest.kcal, previous?.kcal ?? null)}
-              />
-              <MetricCard
-                label="Edad Metabólica"
-                value={latest.metabolicAge}
-                previousValue={previous?.metabolicAge ?? null}
-                unit="años"
-                trend={getTrendIndicator(latest.metabolicAge, previous?.metabolicAge ?? null)}
-              />
-              <MetricCard
-                label="% Grasa Visceral"
-                value={latest.visceralFatPercentage}
-                previousValue={previous?.visceralFatPercentage ?? null}
-                unit="%"
-                trend={getTrendIndicator(latest.visceralFatPercentage, previous?.visceralFatPercentage ?? null)}
-              />
-            </div>
+            <BioimpedanceMetricsGrid latest={latest} previous={previous} age={member?.age} gender={member?.gender} />
           </>
         ) : (
           <p className="text-gray-500 text-sm">Todavía no tenés mediciones cargadas.</p>
@@ -300,10 +242,10 @@ export function MemberHomePage({
 
       {sortedBio.length > 0 && (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-800 p-4 sm:p-6 pb-0">Historial de Registros</h3>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800 px-4 sm:px-6 pt-4 pb-6">Historial de Registros</h3>
 
           {/* Mobile: card list */}
-          <ul className="md:hidden divide-y divide-gray-100 p-4 sm:p-6 pt-4">
+          <ul className="md:hidden divide-y divide-gray-100 px-4 pb-4">
             {sortedBio.map(record => (
               <li key={record.id} className="py-4 first:pt-0">
                 <div className="border border-gray-200 rounded-xl p-4 shadow-sm">
@@ -378,8 +320,8 @@ export function MemberHomePage({
           </ul>
 
           {/* Desktop: table */}
-          <div className="hidden md:block overflow-x-auto p-4 sm:p-6 pt-4">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -585,7 +527,7 @@ export function MemberHomePage({
           </div>
           <div>
             <label htmlFor="kcal" className="block text-sm font-semibold text-gray-700 mb-2">
-              KCAL
+              Metabolismo basal (kcal)
             </label>
             <input
               type="number"
