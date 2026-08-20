@@ -11,7 +11,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      injectRegister: "auto",
+      // Registro manual vía virtual:pwa-register (ver src/registerSW.ts) para poder
+      // manejar el error de registro — el script "auto" no tiene .catch() y una
+      // falla (poco almacenamiento, red cortada, navegador que lo bloquea) queda
+      // como unhandledrejection y llega a Sentry como error sin manejar.
+      injectRegister: false,
       // Solo precachea el shell (JS/CSS/HTML/íconos) — nunca respuestas de la API,
       // que son datos de pagos/bioimpedancia y deben salir siempre de red.
       workbox: {
