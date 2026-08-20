@@ -66,12 +66,12 @@ export function MetricCard({
       : undefined;
 
   return (
-    <div className={`border ${cardClass} p-5 sm:p-6 rounded-lg shadow-sm flex flex-col h-full`}>
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-gray-900 font-bold truncate">{label}</p>
+    <div className={`border ${cardClass} p-3 sm:p-5 lg:p-6 rounded-lg shadow-sm flex flex-col h-full min-w-0 gap-2`}>
+      <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+        <p className="text-xs text-gray-900 font-bold leading-tight">{label}</p>
         {interpretation && (
           <span
-            className={`shrink-0 max-w-[60%] text-center text-[10px] sm:text-xs leading-tight font-extrabold uppercase rounded-full px-2.5 py-1 ${TONE_CLASSES[interpretation.tone]}`}
+            className={`shrink-0 text-center text-[10px] sm:text-xs leading-tight font-extrabold uppercase rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 ${TONE_CLASSES[interpretation.tone]}`}
             title={interpretation.hint}
           >
             {interpretation.label}
@@ -79,13 +79,13 @@ export function MetricCard({
         )}
       </div>
 
-      <div className="mt-auto flex items-end justify-between gap-2 text-gray-900">
-        <p className="text-2xl font-bold text-gray-900 leading-none">
+      <div className="mt-auto flex flex-col items-start gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-2 text-gray-900">
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">
           {value ?? "—"}
           {value !== undefined && unit ? <span className="ml-1 text-xs font-bold text-gray-900">{unit}</span> : null}
         </p>
         <span
-          className="text-base font-bold leading-none shrink-0 text-orange-700"
+          className="text-xs sm:text-base font-bold leading-none text-orange-700"
           title={previousLabel ?? (trend ? (trend.direction === "up" ? "Aumentó" : "Disminuyó") : undefined)}
         >
           {delta}

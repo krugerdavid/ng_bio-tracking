@@ -19,7 +19,7 @@ interface BioimpedanceMetricsGridProps {
 /** Grilla de KPIs de bioimpedancia con tendencia e interpretación clínica. */
 export function BioimpedanceMetricsGrid({ latest, previous, age, gender }: BioimpedanceMetricsGridProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
       <MetricCard
         label="Estatura"
         value={latest.height}
