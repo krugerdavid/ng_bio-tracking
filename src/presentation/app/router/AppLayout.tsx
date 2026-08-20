@@ -134,6 +134,19 @@ export default function AppLayout() {
                     Auditoría
                   </Link>
                 )}
+                {user && (isAdmin(user.role) || isRoot(user.role)) && user.memberId && (
+                  <Link
+                    to="/my-profile"
+                    onClick={e => handleNavClick(e, "/my-profile")}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                      location.pathname === "/my-profile"
+                        ? "bg-orange-500 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    Mi perfil
+                  </Link>
+                )}
               </div>
 
               {user && (
@@ -274,6 +287,19 @@ export default function AppLayout() {
               }`}
             >
               Auditoría
+            </Link>
+          )}
+          {user && (isAdmin(user.role) || isRoot(user.role)) && user.memberId && (
+            <Link
+              to="/my-profile"
+              onClick={e => handleNavClick(e, "/my-profile")}
+              className={`block px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+                location.pathname === "/my-profile"
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              }`}
+            >
+              Mi perfil
             </Link>
           )}
         </nav>

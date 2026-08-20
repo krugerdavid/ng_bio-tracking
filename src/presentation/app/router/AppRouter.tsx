@@ -15,6 +15,9 @@ const MemberListPageController = lazy(() => import("@presentation/features/membe
 const MemberDetailPageController = lazy(
   () => import("@presentation/features/members/pages/MemberDetailPageController")
 );
+const MemberHomePageController = lazy(
+  () => import("@presentation/features/member-home/pages/MemberHomePageController")
+);
 
 const UserManagementPageController = lazy(
   () => import("@presentation/features/admin/pages/UserManagementPageController")
@@ -45,6 +48,17 @@ export const routesConfig = [
           {
             path: "/",
             element: <HomeRouteController />,
+          },
+          {
+            // Ficha de deportista de la propia cuenta, para admins/root que también
+            // tienen un Member vinculado (ej. el profe que además entrena). "/" sigue
+            // yendo al Dashboard para ellos; esto es una pestaña extra, no un switch de rol.
+            path: "/my-profile",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <MemberHomePageController />
+              </Suspense>
+            ),
           },
           {
             path: "/members",
