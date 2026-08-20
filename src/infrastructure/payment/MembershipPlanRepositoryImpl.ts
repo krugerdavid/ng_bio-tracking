@@ -93,14 +93,22 @@ export class MembershipPlanRepositoryImpl implements MembershipPlanRepository {
   }
 
   async findAllByMemberIds(memberIds: string[]): Promise<Result<MembershipPlan[]>> {
-    const results = await Promise.all(memberIds.map(id => this.findByMemberId(id)));
-    const plans: MembershipPlan[] = [];
-    for (const r of results) {
-      if (r.isError()) return Result.error(r.getError());
-      const plan = r.getValue();
-      if (plan) plans.push(plan);
+    if (memberIds.length === 0) {
+      return Result.success([]);
     }
-    return Result.success(plans);
+    try {
+      // Single batched request (backend precarga planes y pagos) en vez de un
+      // GET /members/{id}/plan por cada miembro — evita el patrón N+1 que
+      // se nota a partir de una docena de miembros en el dashboard y la lista.
+      const payload = await this.http.post<{ member_id: string; plan: MembershipPlanApi | null }[]>(
+        "/reports/member-summaries",
+        { member_ids: memberIds }
+      );
+      const plans = payload.filter(item => item.plan !== null).map(item => mapPlanApiToEntity(item.plan!));
+      return Result.success(plans);
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching plans");
+    }
   }
 
   async update(id: string, data: UpdateMembershipPlanDTO): Promise<Result<MembershipPlan>> {

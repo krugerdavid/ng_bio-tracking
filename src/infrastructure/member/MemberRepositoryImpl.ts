@@ -179,15 +179,37 @@ export class MemberRepositoryImpl implements MemberRepository {
     if (memberIds.length === 0) {
       return Result.success(new Map());
     }
-    const results = await Promise.all(memberIds.map(id => this.getDebtSummary(id)));
-    const map = new Map<string, DebtSummary>();
-    for (let i = 0; i < memberIds.length; i++) {
-      const r = results[i];
-      if (r.isSuccess() && r.getValue() !== null) {
-        map.set(memberIds[i], r.getValue()!);
+    try {
+      // Single batched request (backend precarga planes y pagos) en vez de un
+      // GET /members/{id}/debt por cada miembro — evita el patrón N+1 que se
+      // nota a partir de una docena de miembros en el dashboard y la lista.
+      const payload = await this.http.post<
+        {
+          member_id: string;
+          debt: {
+            monthly_fee: number;
+            owed_months: string[];
+            total_debt: number;
+            credit_balance: number;
+            total_debt_after_credit: number;
+          };
+        }[]
+      >("/reports/member-summaries", { member_ids: memberIds });
+
+      const map = new Map<string, DebtSummary>();
+      for (const item of payload) {
+        map.set(item.member_id, {
+          monthlyFee: Number(item.debt.monthly_fee),
+          owedMonths: Array.isArray(item.debt.owed_months) ? item.debt.owed_months : [],
+          totalDebt: Number(item.debt.total_debt),
+          creditBalance: Number(item.debt.credit_balance),
+          totalDebtAfterCredit: Number(item.debt.total_debt_after_credit),
+        });
       }
+      return Result.success(map);
+    } catch (err) {
+      return Result.error(err instanceof ApiError ? err.message : "Error fetching debt summaries");
     }
-    return Result.success(map);
   }
 
   async invite(id: string, email?: string): Promise<Result<{ member: Member; message: string }>> {
