@@ -18,6 +18,12 @@
   <!-- Android Meta Tags -->
   <meta name="theme-color" content="#ffffff" />
   <meta name="mobile-web-app-capable" content="yes" />
+  <script>
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      window.__NG_DEFERRED_INSTALL = e;
+    });
+  </script>
 </head>
 
 <body>

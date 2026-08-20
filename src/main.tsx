@@ -2,6 +2,7 @@ import "reflect-metadata"; // Required for InversifyJS decorators
 
 import "@core/container/bindings"; // Initialize DI container
 import "./index.css";
+import "@/pwa/deferredInstall";
 import "./registerSW";
 
 import React from "react";
